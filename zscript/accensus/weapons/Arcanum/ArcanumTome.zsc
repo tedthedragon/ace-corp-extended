@@ -179,7 +179,7 @@ class HDArcanumTome : HDWeapon
 		sb.DrawString(TitleFont, SelTree.GetName(), (-140, baseOffset), sb.DI_SCREEN_CENTER | sb.DI_TEXT_ALIGN_LEFT);
 		sb.DrawString(DescFont, SelTree.GetDescription(), (-140, baseOffset + 20), sb.DI_SCREEN_CENTER | sb.DI_TEXT_ALIGN_LEFT, Font.CR_WHITE, 1.0, 280, 1);
 
-		sb.DrawString(TitleFont, "Spells", (-140, baseOffset + 90), sb.DI_SCREEN_CENTER | sb.DI_TEXT_ALIGN_LEFT);
+		sb.DrawString(TitleFont, Stringtable.Localize("$ARC_SPELLS"), (-140, baseOffset + 90), sb.DI_SCREEN_CENTER | sb.DI_TEXT_ALIGN_LEFT);
 		for (int i = 0; i < SelTree.Spells.Size(); ++i)
 		{
 			ArcanumSpell CurSpell = SelTree.Spells[i];
@@ -190,7 +190,7 @@ class HDArcanumTome : HDWeapon
 		sb.DrawString(TitleFont, selSpell.GetName(), (-40, yOff), sb.DI_SCREEN_CENTER | sb.DI_TEXT_ALIGN_LEFT, Font.CR_TEAL);
 		if (selSpell.GetMaxExperience() > 0)
 		{
-			sb.DrawString(DescFont, "Experience", (-40, yOff + 20), sb.DI_SCREEN_CENTER | sb.DI_TEXT_ALIGN_LEFT, Font.CR_GOLD);
+			sb.DrawString(DescFont, Stringtable.Localize("$ARC_EXPERIENCE"), (-40, yOff + 20), sb.DI_SCREEN_CENTER | sb.DI_TEXT_ALIGN_LEFT, Font.CR_GOLD);
 			string expStr = "[";
 			for (int i = 0; i < 16; ++i)
 			{
@@ -211,8 +211,8 @@ class HDArcanumTome : HDWeapon
 		double mult = AceCore.CheckForItem(hpl, "HDSoulCube") ? 0.80 : 1.0;
 		int cost = int(selSpell.GetManaCost() * mult);
 
-		string str = String.Format("\c[ArcanumReqBlue]%i\c-", cost);
-		sb.DrawString(DescFont, "\c[DarkGray]Cost: "..str, (-40, yOff + 30), sb.DI_SCREEN_CENTER | sb.DI_TEXT_ALIGN_LEFT);
+		string str = String.Format(Stringtable.Localize("$ARC_BLUECOLOR"), cost);
+		sb.DrawString(DescFont, Stringtable.Localize("$ARC_GREYCOST")..str, (-40, yOff + 30), sb.DI_SCREEN_CENTER | sb.DI_TEXT_ALIGN_LEFT);
 		sb.DrawString(DescFont, selSpell.GetDescription(), (-40, yOff + 50), sb.DI_SCREEN_CENTER | sb.DI_TEXT_ALIGN_LEFT, Font.CR_WHITE, 1.0, 180, 1);
 	}
 
@@ -338,16 +338,16 @@ class HDArcanumTome : HDWeapon
 				ArcanumSpell randSpell = valid[random(0, valid.Size() - 1)];
 				if (randSpell.GainExperience(randSpell.GetMaxExperience() / (multiplayer ? 4.0 : 5.0)))
 				{
-					other.A_Log("\c[Fire]"..randSpell.GetName().."\c- has reached full power.", true);
+					other.A_Log(Stringtable.Localize("$ARC_FIRECOLOR")..randSpell.GetName()..Stringtable.Localize("$ARC_MAXIMUMPOWER"), true);
 				}
 				else
 				{
-					other.A_Log("Your knowledge of \c[Fire]"..randSpell.GetName().."\c- increases.", true);
+					other.A_Log(Stringtable.Localize("$ARC_BIGBRAIN")..randSpell.GetName()..Stringtable.Localize("$ARC_MADGAINZ"), true);
 				}
 			}
 			else
 			{
-				other.A_Log("You fail to learn anything new.", true);
+				other.A_Log(Stringtable.Localize("$ARC_BIGBRAIN_FAILURE"), true);
 			}
 			
 			other.A_StartSound("weapons/pocket");
@@ -377,7 +377,7 @@ class HDArcanumTome : HDWeapon
 		Inventory.PickupSound "weapons/pocket";
 		HDWeapon.Refid "arc";
 		Inventory.MaxAmount 1;
-		Inventory.PickupMessage "You picked up the Arcanum tome of knowledge. Unlimited power awaits those with the energy within.";
+		Inventory.PickupMessage "$PICKUP_ARCANUM";
 	}
 
 	States

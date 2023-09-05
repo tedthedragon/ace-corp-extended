@@ -165,6 +165,7 @@ OB_BLACKHAWKBOLT_I                      = "%o felt a little cold so %k warmed %h
 OB_BLACKHAWKBOLT_N                      = "%k split the atom too close in the vicinity of %o.";
 
 // Pickup Messages
+PICKUP_ARCANUM                          = "You picked up the Arcanum tome of knowledge. Unlimited power awaits those with the energy within.";
 PICKUP_BLACKHAWK_PREFIX                 = "You got the ";
 PICKUP_BLACKHAWK_SUFFIX                 = ".";
 PICKUP_BLACKHAWKBOLT_PREFIX             = "You got an ";
@@ -210,3 +211,14 @@ PICKUP_VIPERMAG_SUFFIX                  = ".";
 PICKUP_WYVERN_PREFIX                    = "You got the ";
 PICKUP_WYVERN_AUTOLOADER                = "Auto-loading ";
 PICKUP_WYVERN_SUFFIX                    = ".";
+
+// Misc weapon strings
+ARC_BIGBRAIN                            = "Your knowledge of \c[Fire]";
+ARC_MADGAINZ                            = "\c- increases.";
+ARC_BIGBRAIN_FAILURE                    = "You fail to learn anything new.";
+ARC_MAXIMUMPOWER                        = "\c- has reached full power.";
+ARC_GREYCOST                            = "\c[DarkGray]Cost: ";
+ARC_BLUECOLOR                           = "\c[ArcanumReqBlue]%i\c-";
+ARC_FIRECOLOR                           = "\c[Fire]";
+ARC_EXPERIENCE                          = "Experience";
+ARC_SPELLS                              = "Spells";
