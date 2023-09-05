@@ -1,0 +1,44 @@
+Arcanum/Sigil/Spawn ARSIGSPW
+$limit Arcanum/Sigil/Spawn 0
+
+Arcanum/Rune/Spawn ARRUNSPW
+
+Arcanum/Destruction/Immolation "Sounds/Arcanum/Destruction/Immolation.wav"
+Arcanum/Destruction/Claymore "Sounds/Arcanum/Destruction/Claymore.wav"
+Arcanum/Destruction/Hammerfist "Sounds/Arcanum/Destruction/Hammerfist.wav"
+Arcanum/Destruction/Voidstorm/Start "Sounds/Arcanum/Destruction/VoidstormStart.wav"
+Arcanum/Destruction/Voidstorm/Loop "Sounds/Arcanum/Destruction/VoidstormLoop.wav"
+$limit Arcanum/Destruction/Voidstorm/Loop 0
+
+Arcanum/Restoration/LifeForce "Sounds/Arcanum/Restoration/LifeForce.wav"
+Arcanum/Restoration/Rage "Sounds/Arcanum/Restoration/Rage.wav"
+$pitchset Arcanum/Restoration/Rage 0.7
+
+Arcanum/Restoration/Transfusion "Sounds/Arcanum/Restoration/Transfusion.wav"
+Arcanum/Restoration/Resurrect "Sounds/Arcanum/Restoration/Resurrect.wav"
+Arcanum/Restoration/SoulGuard "Sounds/Arcanum/Restoration/SoulGuard.wav"
+Arcanum/Restoration/Revitalization "Sounds/Arcanum/Restoration/Revitalization.wav"
+
+Arcanum/Alteration/FarReach "Sounds/Arcanum/Alteration/FarReach.wav"
+Arcanum/Alteration/Worldbreaker "Sounds/Arcanum/Alteration/Worldbreaker.wav"
+Arcanum/Alteration/Haste "Sounds/Arcanum/Alteration/Haste.wav"
+Arcanum/Alteration/HoradricMalus "Sounds/Arcanum/Alteration/HoradricMalus.wav"
+Arcanum/Alteration/Feather "Sounds/Arcanum/Alteration/Feather.wav"
+Arcanum/Alteration/Reenergize "Sounds/Arcanum/Alteration/Reenergize.wav"
+Arcanum/Alteration/Displacement/Start "Sounds/Arcanum/Alteration/DisplacementStart.wav"
+Arcanum/Alteration/Displacement/End "Sounds/Arcanum/Alteration/DisplacementEnd.wav"
+Arcanum/Alteration/StoneFlesh "Sounds/Arcanum/Alteration/StoneFlesh.wav"
+Arcanum/Alteration/MassRecall "Sounds/Arcanum/Alteration/MassRecall.wav"
+
+Arcanum/Conjuration/GuardianOrb/Cast "Sounds/Arcanum/Conjuration/GuardianOrbCast.wav"
+Arcanum/Conjuration/GuardianOrb/Fire "Sounds/Arcanum/Conjuration/GuardianOrbFire.ogg"
+$limit Arcanum/Conjuration/GuardianOrb/Fire 0
+
+Arcanum/Conjuration/GuardianOrb/Die "Sounds/Arcanum/Conjuration/GuardianOrbDie.ogg"
+$limit Arcanum/Conjuration/GuardianOrb/Die 0
+
+$alias Arcanum/Conjuration/GhostSquad misc/p_pkup
+Arcanum/Conjuration/HolyForce "Sounds/Arcanum/Conjuration/HolyForce.wav"
+Arcanum/Conjuration/Barrier "Sounds/Arcanum/Conjuration/Barrier.wav"
+$alias Arcanum/Conjuration/Bridge Arcanum/Conjuration/Barrier
+Arcanum/Conjuration/Candlelight "Sounds/Arcanum/Conjuration/Candlelight.wav"

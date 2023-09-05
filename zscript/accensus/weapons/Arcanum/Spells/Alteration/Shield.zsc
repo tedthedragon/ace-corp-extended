@@ -1,0 +1,126 @@
+class ShieldSpell : ArcanumSpell
+{
+	override int GetIndex() { return 20; }
+	override class<ArcanumSpellTree> GetTree() { return 'ArcanumTreeAlteration'; }
+	override string GetName() { return "Shield"; }
+	override int GetSpellType() { return SType_SelfOrMass | SType_Targeted; }
+	override int GetManaCost() { return 70; }
+	override string GetDescription() { return String.Format("Target is surrounded with a shield that can absorb up to \c[Gold]%i\c- damage. Shield helps put out fire.", int(2000 + 8000 * GetExperienceFactor())); }
+	override string GetTechnicalInfo() { return "Self, Targeted, Touch"; }
+	override int GetMaxExperience() { return 110; }
+	override class<ArcanumSigil> GetSigil() { return 'ShieldSigil'; }
+	override void DrawHudStuff(HDStatusBar sb, HDPlayerPawn hpl, HDArcanumTome tome)
+	{
+		HDMagicShield sld = null;
+		if (tome.SpiedActor)
+		{
+			sld = HDMagicShield(tome.SpiedActor.FindInventory('ArcanumShield'));
+		}
+		else
+		{
+			sld = HDMagicShield(hpl.FindInventory('ArcanumShield'));
+		}
+		if (sld && sld.Amount > 0)
+		{
+			sb.DrawRect(-33, -22, 2, 8);
+			sb.DrawRect(-31, -20, 2, 8);
+			sb.DrawRect(-29, -22, 2, 12);
+			sb.DrawRect(-27, -20, 2, 8);
+			sb.DrawRect(-25, -22, 2, 8);
+			sb.DrawWepNum(sld.Amount, sld.MaxAmount, alwaysprecise: true);
+		}
+	}
+}
+
+class ShieldSigil : ArcanumSigil
+{
+	override void ActivateTargeted()
+	{
+		let trgt = AimTarget();
+		if (trgt && trgt.Health > 0 && (trgt.bISMONSTER || trgt.player) && Distance3D(trgt) <= HDCONST_ONEMETRE * 2)
+		{
+			CastShield(trgt);
+		}
+	}
+
+	override void ActivateSelfOrMass()
+	{
+		if (master)
+		{
+			CastShield(master);
+		}
+	}
+
+	private void CastShield(Actor trgt)
+	{
+		trgt.A_StartSound("misc/mobshieldf", CHAN_BODY, CHANF_OVERLAP, 0.75);
+		for (int i = 0; i < 20; ++i)
+		{
+			vector3 RandPos = trgt.pos + (frandom(-trgt.radius, trgt.radius), frandom(-trgt.radius, trgt.radius), frandom(0, trgt.height));
+			actor Spark = Spawn("ShieldSpark", RandPos, ALLOW_REPLACE);
+			vector3 sv = Spark.Vec3To(trgt);
+			sv.z += trgt.height / 2;
+			Spark.vel = (sv / 50.0);
+		}
+		trgt.A_GiveInventory("ArcanumShield");
+		let shield = ArcanumShield(trgt.FindInventory("ArcanumShield"));
+		int amt = int(1000 + 9000 * ExperienceFactor);
+		shield.Stamina = amt * 2;
+		shield.MaxAmount = shield.Amount = amt;
+	}
+
+	override void InitRuneSlots()
+	{
+		vector2 Size = (2.2, 3.666);
+		double X = 6.3, Y = 6.3;
+
+		CreateRuneSlot((X, Y), Size, 0.5);
+		CreateRuneSlot((X, -Y), Size, 0.5);
+		CreateRuneSlot((-X, -Y), Size, 0.5);
+		CreateRuneSlot((-X, Y), Size, 0.5);
+
+		Size = (3.5, 5.833);
+		X = 17; Y = 17;
+		CreateRuneSlot((0, Y), Size, 0.9);
+		CreateRuneSlot((X, 0), Size, 0.9);
+		CreateRuneSlot((0, -Y), Size, 0.9);
+		CreateRuneSlot((-X, 0), Size, 0.9);
+	}
+
+	Default
+	{
+		StencilColor "5CFA6E";
+	}
+
+	States
+	{
+		Spawn:
+			CRAL C 0;
+			Goto Super::Spawn;
+	}
+}
+
+class ArcanumShield : HDMagicShield
+{
+	override void DoEffect()
+	{
+		if (owner.bCORPSE || owner.Health < 1)
+		{
+			return;
+		}
+
+		if (amount < 1)
+		{
+			Destroy();
+			return;
+		}
+
+		owner.A_GiveInventory('HDFireDouse', 3);
+	}
+
+	Default
+	{
+		-INVENTORY.INVBAR
+		HDDamageHandler.Priority 10001; // [Ace] Handle it before the regular shield.
+	}
+}

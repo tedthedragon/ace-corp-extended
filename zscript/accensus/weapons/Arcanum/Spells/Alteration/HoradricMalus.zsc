@@ -1,0 +1,140 @@
+class HoradricMalusSpell : ArcanumSpell
+{
+	override int GetIndex() { return 40; }
+	override class<ArcanumSpellTree> GetTree() { return 'ArcanumTreeAlteration'; }
+	override string GetName() { return "Horadric Malus"; }
+	override int GetSpellType() { return SType_SelfOrMass | SType_Targeted; }
+	override int GetManaCost() { return 60; }
+	override string GetDescription() { return String.Format("Repairs repairable items by \c[Gold]%i%%\c- of their missing durability. Repairs Vulcanettes and *.E.R.P.s, among other things.", int(35 + 45 * GetExperienceFactor())); }
+	override string GetTechnicalInfo() { return "Self, Targeted, Touch"; }
+	override int GetMaxExperience() { return 100; }
+	override class<ArcanumSigil> GetSigil() { return 'HoradricMalusSigil'; }
+}
+
+class HoradricMalusSigil : ArcanumSigil
+{
+	override void ActivateTargeted()
+	{
+		Actor a = AimTarget();
+		if (a && a.Health > 0 && Distance3D(a) <= HDCONST_ONEMETRE * 2)
+		{
+			RepairArmor(a);
+		}
+	}
+
+	override void ActivateSelfOrMass()
+	{
+		if (master)
+		{
+			RepairArmor(master);
+		}
+	}
+
+	private void TryPlaySound()
+	{
+		if (!HasPlayedSound)
+		{
+			PlayCastSound(self, "Arcanum/Alteration/HoradricMalus");
+			HasPlayedSound = true;
+		}
+	}
+
+	private void RepairArmor(Actor a)
+	{
+		for (Inventory Next = a.Inv; Next; Next = Next.Inv)
+		{
+			let arm = HDArmourWorn(Next);
+			if (arm)
+			{
+				TryPlaySound();
+				int maxDurability = arm.Mega ? 70 : 144;
+				if (arm.GetClassName() == 'HHelmetWorn')
+				{
+					maxDurability = 72;
+				}
+				else if (arm.GetClassName() == 'HDHEVArmourWorn')
+				{
+					maxDurability = 107;
+				}
+				int missing = maxDurability - arm.Durability;
+				arm.Durability += int(missing * (0.35 + 0.45 * ExperienceFactor));
+			}
+
+			let wpn = HDWeapon(Next);
+			if (wpn)
+			{
+				switch (wpn.GetClassName())
+				{
+					case 'Vulcanette':
+					{
+						TryPlaySound();
+						wpn.WeaponStatus[VULCS_PERMADAMAGE] = int(wpn.WeaponStatus[VULCS_PERMADAMAGE] * (0.65 - 0.45 * ExperienceFactor));
+						wpn.WeaponStatus[VULCS_BREAKCHANCE] = int(wpn.WeaponStatus[VULCS_BREAKCHANCE] * (0.65 - 0.45 * ExperienceFactor));
+						break;
+					}
+					case 'HDVera':
+					{
+						TryPlaySound();
+						wpn.WeaponStatus[10] = int(wpn.WeaponStatus[10] * (0.65 - 0.45 * ExperienceFactor));
+						break;
+					}
+					case 'DERPUsable':
+					{
+						TryPlaySound();
+						wpn.WeaponStatus[0] &= ~DERPF_BROKEN;
+						break;
+					}
+					case 'HERPUsable':
+					{
+						TryPlaySound();
+						wpn.WeaponStatus[0] &= ~HERPF_BROKEN;
+						break;
+					}
+				}
+			}
+
+			let pkp = HDPickup(Next);
+			if (pkp)
+			{
+				switch (pkp.GetClassName())
+				{
+					case 'HDDeployableBarricade':
+					{
+						TryPlaySound();
+						int missing = pkp.default.Health - pkp.Health;
+						pkp.Health += int(missing * (0.35 + 0.45 * ExperienceFactor));
+						break;
+					}
+				}
+			}
+		}
+	}
+
+	override void InitRuneSlots()
+	{
+		vector2 BigSize = (4, 6.66);
+		CreateRuneSlot((-14, 0), BigSize, 1.0); CreateRuneSlot((14, 0), BigSize, 1.0);
+
+		vector2 MedSize = (3, 5);
+		CreateRuneSlot((-7.8, 7.1), MedSize, 0.7); CreateRuneSlot((7.8, 7.1), MedSize, 0.7);
+		CreateRuneSlot((-7.8, -7.1), MedSize, 0.7); CreateRuneSlot((7.8, -7.1), MedSize, 0.7);
+
+		vector2 SmallSize = (2, 3.33);
+		CreateRuneSlot((0, 11), SmallSize, 0.5); CreateRuneSlot((0, -11), SmallSize, 0.5);
+	}
+
+	private bool HasPlayedSound;
+
+	Default
+	{
+		ArcanumSigil.AddAlpha 1.25;
+		StencilColor "998456";
+	}
+
+	States
+	{
+		Spawn:
+			CRAL E 0;
+			Goto Super::Spawn;
+	}
+}

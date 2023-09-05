@@ -1,0 +1,157 @@
+#include "zscript/accensus/weapons/Arcanum/Spells/Destruction/Fireball.zsc"
+#include "zscript/accensus/weapons/Arcanum/Spells/Destruction/Claymore.zsc"
+#include "zscript/accensus/weapons/Arcanum/Spells/Destruction/Thunderclap.zsc"
+#include "zscript/accensus/weapons/Arcanum/Spells/Destruction/Hammerfist.zsc"
+#include "zscript/accensus/weapons/Arcanum/Spells/Destruction/Immolation.zsc"
+#include "zscript/accensus/weapons/Arcanum/Spells/Destruction/Voidstorm.zsc"
+
+#include "zscript/accensus/weapons/Arcanum/Spells/Restoration/Revitalization.zsc"
+#include "zscript/accensus/weapons/Arcanum/Spells/Restoration/LifeForce.zsc"
+#include "zscript/accensus/weapons/Arcanum/Spells/Restoration/Rage.zsc"
+#include "zscript/accensus/weapons/Arcanum/Spells/Restoration/Transfusion.zsc"
+#include "zscript/accensus/weapons/Arcanum/Spells/Restoration/Resurrect.zsc"
+#include "zscript/accensus/weapons/Arcanum/Spells/Restoration/SoulGuard.zsc"
+#include "zscript/accensus/weapons/Arcanum/Spells/Restoration/Invulnerability.zsc"
+
+#include "zscript/accensus/weapons/Arcanum/Spells/Alteration/FarReach.zsc"
+#include "zscript/accensus/weapons/Arcanum/Spells/Alteration/Worldbreaker.zsc"
+#include "zscript/accensus/weapons/Arcanum/Spells/Alteration/Shield.zsc"
+#include "zscript/accensus/weapons/Arcanum/Spells/Alteration/Haste.zsc"
+#include "zscript/accensus/weapons/Arcanum/Spells/Alteration/HoradricMalus.zsc"
+#include "zscript/accensus/weapons/Arcanum/Spells/Alteration/Feather.zsc"
+#include "zscript/accensus/weapons/Arcanum/Spells/Alteration/Reenergize.zsc"
+#include "zscript/accensus/weapons/Arcanum/Spells/Alteration/Displacement.zsc"
+#include "zscript/accensus/weapons/Arcanum/Spells/Alteration/MassRecall.zsc"
+
+#include "zscript/accensus/weapons/Arcanum/Spells/Conjuration/GuardianOrb.zsc"
+#include "zscript/accensus/weapons/Arcanum/Spells/Conjuration/GhostSquad.zsc"
+#include "zscript/accensus/weapons/Arcanum/Spells/Conjuration/HolyForce.zsc"
+#include "zscript/accensus/weapons/Arcanum/Spells/Conjuration/Barrier.zsc"
+#include "zscript/accensus/weapons/Arcanum/Spells/Conjuration/Bridge.zsc"
+#include "zscript/accensus/weapons/Arcanum/Spells/Conjuration/Candlelight.zsc"
+
+// DEBUG & MISC
+class ArcanumMath
+{
+	const Pi = 3.14159;
+}
+
+class ArcanumSpellTree abstract play
+{
+	abstract clearscope string GetName() const;
+	abstract clearscope string GetDescription() const;
+	Array<ArcanumSpell> Spells;
+
+	void InsertSpell(ArcanumSpell spl)
+	{
+		int InsIndex = 0;
+		int SpellsCount = Spells.Size();
+		if (SpellsCount > 0)
+		{
+			for (int i = 0; i < SpellsCount; ++i)
+			{
+				if (spl.GetIndex() >= Spells[i].GetIndex())
+				{
+					InsIndex = i + 1;
+				}
+				else
+				{
+					InsIndex = i;
+					break;
+				}
+			}
+		}
+		Spells.Insert(InsIndex, spl);
+	}
+
+	bool SpellExists(class<ArcanumSpell> spell)
+	{
+		for (int i = 0; i < Spells.Size(); ++i)
+		{
+			if (Spells[i].GetClass() == spell)
+			{
+				return true;
+			}
+		}
+
+		return false;
+	}
+}
+
+class ArcanumTreeDestruction : ArcanumSpellTree
+{
+	override string GetName() { return "\c[Red]Destruction\c-"; }
+	override string GetDescription() { return "Those who wish to destroy the world may find out how trivial it is. But is it really what you want?\n\nThis tree contains spells to call down thunder, annihilate entire hordes, or light a candle."; }
+}
+
+class ArcanumTreeRestoration : ArcanumSpellTree
+{
+	override string GetName() { return "\c[Tan]Restoration\c-"; }
+	override string GetDescription() { return "It is a wise man's goal to heal the world.\n\nRestoration spells give you the ability to resurrect friends or foes, heal their wounds, cleanse their body, and protect it."; }
+}
+
+class ArcanumTreeAlteration : ArcanumSpellTree
+{
+	override string GetName() { return "\c[Green]Alteration\c-"; }
+	override string GetDescription() { return "Nothing is as it appears. Manipulate the world to your liking.\n\nThe school of Alteration lets you destroy entire walls or otherwise manipulate objects."; }
+}
+
+class ArcanumTreeConjuration : ArcanumSpellTree
+{
+	override string GetName() { return "\c[Purple]Conjuration\c-"; }
+	override string GetDescription() { return "If it does not exist, make it.\n\nConjuration is for the strongest of magi. With it, you can summon monsters or materialize objects."; }
+}
+
+class ArcanumSpell abstract play
+{
+	enum SType
+	{
+		SType_SelfOrMass = 1,
+		SType_Targeted = 2
+	}
+
+	abstract class<ArcanumSpellTree> GetTree() const;
+	abstract int GetIndex() const;
+	abstract string GetName() const;
+	abstract int GetSpellType() const;
+	abstract int GetManaCost() const; // [Ace] Returns: blood, blues.
+	abstract ui string GetDescription() const;
+	abstract ui string GetTechnicalInfo() const;
+	abstract int GetMaxExperience() const;
+	abstract class<ArcanumSigil> GetSigil() const;	
+	virtual ui void DrawHudStuff(HDStatusBar sb, HDPlayerPawn hpl, HDArcanumTome tome) { }
+
+	// [Ace; 17.01.22] This is currently unused because I've opted for a threshold system rather than a time duration.
+	// HDest is a slow mod so half the time the effects expire before you've made use of them or they require you to know in advance that you'd need them.
+	// This virtual only makes sense for timed effects whose indicator is not drawn in DrawHudStuff.
+	// The returns are the graphic to use and the class the internal stuff should check for.
+	virtual ui string, class<Powerup> GetIndicatorInfo() const { return "", null; }
+
+	// [Ace] Returns whether or not the spell reached max level.
+	bool GainExperience(double amt)
+	{
+		int maxExp = GetMaxExperience();
+		if (Experience == maxExp)
+		{
+			return false;
+		}
+
+		Experience = min(maxExp, Experience + amt);
+		return Experience == maxExp;
+	}
+
+	clearscope double GetExperienceFactor()
+	{
+		int maxExp = GetMaxExperience();
+		return maxExp > 0 ? Experience / maxExp : 0;
+	}
+
+	double Experience;
+}
+
+class ArcanumIndicator ui
+{
+	string Icon;
+	Vector2 Pos;
+	Color Col;
+}

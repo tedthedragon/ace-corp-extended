@@ -1,0 +1,76 @@
+class FireballSpell : ArcanumSpell
+{
+	override int GetIndex() { return 0; }
+	override class<ArcanumSpellTree> GetTree() { return 'ArcanumTreeDestruction'; }
+	override string GetName() { return "Fireball"; }
+	override int GetSpellType() { return SType_Targeted; }
+	override int GetManaCost() { return 2; }
+	override string GetDescription() { return String.Format("Barrage target area with \c[Gold]%i\c- fireballs.", int(5 + 45 * GetExperienceFactor())); }
+	override string GetTechnicalInfo() { return "Targeted, Thermal, Dangerous"; }
+	override int GetMaxExperience() { return 300; }
+	override class<ArcanumSigil> GetSigil() { return 'FireballSigil'; }
+}
+
+class FireballSigil : ArcanumSigil
+{
+	override void PostBeginPlay()
+	{
+		Super.PostBeginPlay();
+
+		ReactionTime = int(5 + 45 * ExperienceFactor);
+	}
+
+	override void ActivateTargeted()
+	{
+		if (!AlreadyActivated)
+		{
+			BlockThingsIterator it = BlockThingsIterator.Create(self, HDCONST_ONEMETRE * 100);
+			while (it.Next())
+			{
+				if (it.thing.bISMONSTER && it.thing.Health > 0 && !it.thing.bFRIENDLY && CheckSight(it.thing) && AbsAngle(angle, AngleTo(it.thing)) < 70)
+				{
+					ViableTargets.Push(it.thing);
+				}
+			}
+			AlreadyActivated = true;
+		}
+
+		int randRoll = random(0, 359);
+		int tSize = ViableTargets.Size();
+		if (tSize > 0)
+		{
+			target = ViableTargets[random(0, ViableTargets.Size() - 1)];
+		}
+
+		Actor a = A_SpawnProjectile("ArdentipedeBall2", Height * cos(randRoll), Height * sin(randRoll), random(-4, 4), CMF_AIMDIRECTION, pitch + random(-2, 2));
+		if (a)
+		{
+			a.target = master;
+			a.bFRIENDLY = true;
+			a.A_ScaleVelocity(6.0);
+		}
+		ReactionTime--;
+	}
+
+	override void InitRuneSlots()
+	{
+		CreateRuneSlot((0, 0), (7, 11.66), 1.75);
+	}
+
+	private Array<Actor> ViableTargets;
+	private bool AlreadyActivated;
+
+	Default
+	{
+		+FRIENDLY
+		+ARCANUMSIGIL.NOHEIGHTADJUST
+		StencilColor "FF2200";
+	}
+
+	States
+	{
+		Spawn:
+			CRDE A 0;
+			Goto Super::Spawn;
+	}
+}

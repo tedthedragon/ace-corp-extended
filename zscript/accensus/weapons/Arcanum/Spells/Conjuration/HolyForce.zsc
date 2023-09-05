@@ -1,0 +1,139 @@
+class HolyForceSpell : ArcanumSpell
+{
+	override int GetIndex() { return 10; }
+	override class<ArcanumSpellTree> GetTree() { return 'ArcanumTreeConjuration'; }
+	override string GetName() { return "Holy Force"; }
+	override int GetSpellType() { return SType_SelfOrMass; }
+	override int GetManaCost() { return 40; }
+	override string GetDescription() { return String.Format("Prevents all archviles within 20m from disappearing until they die. Forces it out of hiding if it's invisible. If no archviles were affected, trigger nearby curses, if any. Reveals possessed barrels."); }
+	override string GetTechnicalInfo() { return "Mass"; }
+	override int GetMaxExperience() { return 0; }
+	override class<ArcanumSigil> GetSigil() { return 'HolyForceSigil'; }
+}
+
+class HolyForceSigil : ArcanumSigil
+{
+	private void TryPlaySound()
+	{
+		if (!HasPlayedSound)
+		{
+			PlayCastSound(self, "Arcanum/Conjuration/HolyForce");
+			HasPlayedSound = true;
+		}
+	}
+
+	override void ActivateSelfOrMass()
+	{
+		bool hasForcedArchvile = false;
+		HDActor a;
+		ThinkerIterator it;
+
+		// [Ace] The iterators are deliberately split.
+		it = ThinkerIterator.Create('Necromancer', STAT_DEFAULT);
+		while ((a = HDActor(it.Next())))
+		{
+			if (Distance2D(a) > HDCONST_ONEMETRE * 20 || a.Health <= 0 || a.bFRIENDLY || a.CheckInventory("HolyCompeller", 1))
+			{
+				continue;
+			}
+
+			TryPlaySound();
+			a.A_GiveInventory("HolyCompeller");
+			hasForcedArchvile = true;
+		}
+
+		// [Ace] If no archviles were affected, activate nearby curses, if any.
+		if (!hasForcedArchvile)
+		{
+			it = ThinkerIterator.Create('Necromancer', STAT_DEFAULT);
+			while ((a = HDActor(it.Next())))
+			{
+				if (Distance2D(a) > HDCONST_ONEMETRE * 20 || !a.InStateSequence(a.CurState, a.FindState('dead')))
+				{
+					continue;
+				}
+
+				TryPlaySound();
+				a.SetStateLabel('ghost');
+			}
+		}
+
+		it = ThinkerIterator.Create('BarrelGremlin', STAT_DEFAULT);
+		while ((a = HDActor(it.Next())))
+		{
+			if (Distance2D(a) > HDCONST_ONEMETRE * 20 || a.tracer is 'HolyForceBarrelGlow')
+			{
+				continue;
+			}
+
+			TryPlaySound();
+			Actor light = Spawn('HolyForceBarrelGlow', a.pos);
+			light.master = a;
+			a.tracer = light;
+		}
+	}
+
+	override void InitRuneSlots()
+	{
+		vector2 Size = (4, 6.66);
+		CreateRuneSlot((-32.1, 18.75), Size, 1.4);
+		CreateRuneSlot((0, 18.75), Size, 1.4);
+		CreateRuneSlot((32.1, 18.75), Size, 1.4);
+		CreateRuneSlot((0, -37.1), Size, 1.4);
+	}
+
+	private bool HasPlayedSound;
+
+	Default
+	{
+		Height 44;
+		Radius 50;
+		StencilColor "AAAAAA";
+	}
+
+	States
+	{
+		Spawn:
+			CRCN B 0;
+			Goto Super::Spawn;
+	}
+}
+
+class HolyCompeller : Inventory
+{
+	override void DoEffect()
+	{
+		if (!owner)
+		{
+			Destroy();
+			return;
+		}
+
+		let Necro = Necromancer(owner);
+		if (Necro && Necro.tics > 20 && Necro.InStateSequence(Necro.CurState, Necro.FindState('painedandgone')))
+		{
+			Necro.A_Pain();
+			Necro.tics = 20;
+		}
+	}
+}
+
+class HolyForceBarrelGlow : PointLightPulse
+{
+	override void Tick()
+	{
+		if (!master)
+		{
+			Destroy();
+			return;
+		}
+
+		Super.Tick();
+	}
+
+	Default
+	{
+		+DYNAMICLIGHT.ATTENUATE
+		Args 255, 64, 64, 32, 48;
+	}
+}

@@ -69,6 +69,11 @@ server int wyvern_hunter_spawn_bias = 99;
 server int wyvern_slayer_spawn_bias = 49;
 server bool wyvern_persistent_spawning = false;
 
+// Arcanum
+server bool arcanum_allowBackpacks = true;
+server int arcanum_chainsaw_spawn_bias = 49;
+server int manabarrel_barrel_spawn_bias = 14;
+server bool arcanum_persistent_spawning = false;
 
 //------------
 // Ammunition
@@ -98,3 +103,12 @@ server bool majesticmag_persistent_spawning = false;
 server bool vipermag_allowBackpacks = true;
 server int vipermag_clipmag_spawn_bias = 24;
 server bool vipermag_persistent_spawning = false;
+
+//------------
+// Miscellaneous
+//------------
+
+// Arcanum
+server bool arcanum_debug = false;
+user int arcanum_invert = 0;
+user bool arcanum_zoomhold = false;

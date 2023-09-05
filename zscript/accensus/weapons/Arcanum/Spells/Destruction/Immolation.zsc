@@ -1,0 +1,60 @@
+class ImmolationSpell : ArcanumSpell
+{
+	override int GetIndex() { return 40; }
+	override class<ArcanumSpellTree> GetTree() { return 'ArcanumTreeDestruction'; }
+	override string GetName() { return "Immolation"; }
+	override int GetSpellType() { return SType_SelfOrMass; }
+	override int GetManaCost() { return 120; }
+	override string GetDescription() { return String.Format("Sets all enemies within \c[Gold]%.1f\c-m on fire.", 10 + 20 * GetExperienceFactor()); }
+	override string GetTechnicalInfo() { return "Mass, Thermal"; }
+	override int GetMaxExperience() { return 40; }
+	override class<ArcanumSigil> GetSigil() { return 'ImmolationSigil'; }
+}
+
+class ImmolationSigil : ArcanumSigil
+{
+	override void ActivateSelfOrMass()
+	{
+		bool HasPlayedSound;
+		double ImmolationDistance = HDCONST_ONEMETRE * (10 + 20 * ExperienceFactor);
+		BlockThingsIterator it = BlockThingsIterator.Create(self, ImmolationDistance);
+		while (it.Next())
+		{
+			if (it.thing.Health <= 0 || !it.thing.bISMONSTER || it.thing.bFRIENDLY || Distance3D(it.thing) > ImmolationDistance || it.thing is 'HDBossBrain')
+			{
+				continue;
+			}
+
+			if (!HasPlayedSound)
+			{
+				PlayCastSound(self, "Arcanum/Destruction/Immolation");
+				HasPlayedSound = true;
+			}
+
+			it.thing.A_GiveInventory("Heat", 2000);
+		}
+	}
+
+	override void InitRuneSlots()
+	{
+		vector2 Size = (11, 18.333);
+		CreateRuneSlot((-31, 0), Size, 3.3);
+		CreateRuneSlot((0, 31), Size, 3.3);
+		CreateRuneSlot((31, 0), Size, 3.3);
+		CreateRuneSlot((0, -31), Size, 3.3);
+	}
+
+	Default
+	{
+		Height 44;
+		Radius 50;
+		StencilColor "FF8811";
+	}
+
+	States
+	{
+		Spawn:
+			CRDE E 0;
+			Goto Super::Spawn;
+	}
+}

@@ -1,0 +1,60 @@
+class RageSpell : ArcanumSpell
+{
+	override int GetIndex() { return 11; }
+	override class<ArcanumSpellTree> GetTree() { return 'ArcanumTreeRestoration'; }
+	override string GetName() { return "Rage"; }
+	override int GetSpellType() { return SType_SelfOrMass | SType_Targeted; }
+	override int GetManaCost() { return 90; }
+	override string GetDescription() { return String.Format("[this page is full of incomprehensible scribbles]"); }
+	override string GetTechnicalInfo() { return "Self, Targeted, Touch"; }
+	override int GetMaxExperience() { return 0; }
+	override class<ArcanumSigil> GetSigil() { return 'RageSigil'; }
+}
+
+class RageSigil : ArcanumSigil
+{
+	override void ActivateTargeted()
+	{
+		Actor a = AimTarget();
+		if (a && a.Health > 0 && Distance3D(a) <= HDCONST_ONEMETRE * 2)
+		{
+			HulkSmash(a);
+		}
+	}
+
+	override void ActivateSelfOrMass()
+	{
+		if (master)
+		{
+			HulkSmash(master);
+		}
+	}
+
+	private void HulkSmash(Actor a)
+	{
+		let plr = HDPlayerPawn(a);
+		if (plr)
+		{
+			PlayCastSound(self, "Arcanum/Restoration/Rage");
+			Actor zerk = Spawn('InjectZerkDummy', pos);
+			zerk.target = plr;
+		}
+	}
+
+	override void InitRuneSlots()
+	{
+		CreateRuneSlot((0, 0), (5, 8.33), 1.35);
+	}
+
+	Default
+	{
+		StencilColor "FF0000";
+	}
+
+	States
+	{
+		Spawn:
+			CRRE H 0;
+			Goto Super::Spawn;
+	}
+}

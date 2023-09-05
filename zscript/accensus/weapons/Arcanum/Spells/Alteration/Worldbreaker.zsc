@@ -1,0 +1,56 @@
+class WorldbreakerSpell : ArcanumSpell
+{
+	override int GetIndex() { return 10; }
+	override class<ArcanumSpellTree> GetTree() { return 'ArcanumTreeAlteration'; }
+	override string GetName() { return "Worldbreaker"; }
+	override int GetSpellType() { return SType_Targeted; }
+	override int GetManaCost() { return 60; }
+	override string GetDescription() { return String.Format("Destroys the target geometry. Maximum sector dimensions: \c[Gold]%ix%i\c-\n\n\c[Fire]Effect occurs 3 seconds after activation.\c-", int(128 + 256 * GetExperienceFactor()), int(32 + 64 * GetExperienceFactor())); }
+	override string GetTechnicalInfo() { return "Targeted, Touch"; }
+	override int GetMaxExperience() { return 60; }
+	override class<ArcanumSigil> GetSigil() { return 'WorldbreakerSigil'; }
+}
+
+class WorldbreakerSigil : ArcanumSigil
+{
+	override void ActivateTargeted()
+	{
+		ReactionTime--;
+		if (ReactionTime == 0)
+		{
+			A_StartSound("weapons/bigcrack", CHAN_AUTO);
+			A_StartSound("world/explode", CHAN_VOICE);
+			DoorDestroyer.DestroyDoor(self, int(128 + 256 * ExperienceFactor), int(32 + 64 * ExperienceFactor), HDCONST_ONEMETRE * 2); 
+		}
+
+		if (!HasPlayedSound)
+		{
+			PlayCastSound(self, "Arcanum/Alteration/Worldbreaker");
+			HasPlayedSound = true;
+		}
+	}
+
+	override void InitRuneSlots()
+	{
+		vector2 Size = (3.5, 5.83);
+		CreateRuneSlot((-7.8, 9.5), Size, 1.0); CreateRuneSlot((7.8, 9.5), Size, 1.0);
+		CreateRuneSlot((-18, 0), Size, 1.0); CreateRuneSlot((18, 0), Size, 1.0);
+		CreateRuneSlot((-7.8, -9.5), Size, 1.0); CreateRuneSlot((7.8, -9.5), Size,1.07);
+	}
+
+	private bool HasPlayedSound;
+
+	Default
+	{
+		ReactionTime 110;
+		+ARCANUMSIGIL.DONTPITCH
+		StencilColor "44FF44";
+	}
+
+	States
+	{
+		Spawn:
+			CRAL B 0;
+			Goto Super::Spawn;
+	}
+}

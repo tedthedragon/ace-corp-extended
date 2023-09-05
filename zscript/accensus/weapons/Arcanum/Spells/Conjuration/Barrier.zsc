@@ -1,0 +1,237 @@
+class BarrierSpell : ArcanumSpell
+{
+	override int GetIndex() { return 20; }
+	override class<ArcanumSpellTree> GetTree() { return 'ArcanumTreeConjuration'; }
+	override string GetName() { return "Barrier"; }
+	override int GetSpellType() { return SType_Targeted; }
+	override int GetManaCost() { return 35; }
+	override string GetDescription() { return "Creates a 10m-wide impenetrable energy wall 1m in front of you. Lasts 90 seconds. Blocks movement and projectiles."; }
+	override string GetTechnicalInfo() { return "Touch"; }
+	override int GetMaxExperience() { return 0; }
+	override class<ArcanumSigil> GetSigil() { return 'BarrierSigil'; }
+}
+
+class BarrierSigil : ArcanumSigil
+{
+	override void ActivateTargeted()
+	{
+		FLineTraceData Data;
+		LineTrace(angle, HDCONST_ONEMETRE, pitch, TRF_THRUACTORS, 0, 0, 0, Data);
+		Actor a = Spawn("ArcanumBarrierManager", Data.HitLocation);
+		a.Angle = Angle;
+		PlayCastSound(self, "Arcanum/Conjuration/Barrier");
+	}
+
+	override void InitRuneSlots()
+	{
+		vector2 Size = (2, 3.333);
+		double X = 18.2, Y = 0;
+		double RSize = 0.6;
+		CreateRuneSlot((-X, 0), Size, RSize);
+		CreateRuneSlot((X, 0), Size, RSize);
+
+		X = 11.4; Y = 3.9;
+		CreateRuneSlot((-X, Y), Size, RSize);
+		CreateRuneSlot((X, Y), Size, RSize);
+		CreateRuneSlot((X, -Y), Size, RSize);
+		CreateRuneSlot((-X, -Y), Size, RSize);
+	}
+
+	Default
+	{
+		+ARCANUMSIGIL.DONTPITCH
+		StencilColor "70C3F0";
+	}
+
+	States
+	{
+		Spawn:
+			CRCN C 0;
+			Goto Super::Spawn;
+	}
+}
+
+class ArcanumBarrierManager : Actor
+{
+	override void PostBeginPlay()
+	{
+		SetOrigin((pos.x, pos.y, pos.z - (Height / 2)), false);
+		double relZ = pos.z - floorz;
+		if (relZ < 2)
+		{
+			SetOrigin((pos.x, pos.y, pos.z + abs(relZ) + 2), false);
+		}
+		Super.PostBeginPlay();
+	}
+
+	protected Array<Actor> Blockers;
+
+	Default
+	{
+		Height 112;
+		+NOBLOCKMAP
+		+NOGRAVITY
+		+NOSECTOR
+		ReactionTime 35 * 90;
+	}
+
+	protected int SpawnIndex;
+
+	States
+	{
+		Spawn:
+			TNT1 A 2 NoDelay
+			{
+				Actor a; bool success;
+				double SpawnHeight = Height / 2;
+				[success, a] = A_SpawnItemEx("ArcanumBarrier", 0, 0, SpawnHeight + 44, flags: SXF_NOCHECKPOSITION); Blockers.Push(a);
+				[success, a] = A_SpawnItemEx("ArcanumBarrier", 0, 0, SpawnHeight + 22, flags: SXF_NOCHECKPOSITION); Blockers.Push(a);
+				[success, a] = A_SpawnItemEx("ArcanumBarrier", 0, 0, SpawnHeight, flags: SXF_NOCHECKPOSITION); Blockers.Push(a);
+				[success, a] = A_SpawnItemEx("ArcanumBarrier", 0, 0, SpawnHeight - 22, flags: SXF_NOCHECKPOSITION); Blockers.Push(a);
+				[success, a] = A_SpawnItemEx("ArcanumBarrier", 0, 0, SpawnHeight - 44, flags: SXF_NOCHECKPOSITION); Blockers.Push(a);
+				SpawnIndex++;
+			}
+		SpawnNext:
+			TNT1 A 2
+			{
+				// [Ace] Completely eyeballed it. Don't touch unless really necessary.
+				// It's a little over 10m but I can't make it perfect.
+				if (SpawnIndex == 10)
+				{
+					SetStateLabel('Idle');
+					return;
+				}
+
+				Actor a; bool success;
+				for (int i = -1; i <= 1; ++i) // [Ace] Does it look stupid? Yes. Does it work? Yes. Therefore, it's not stupid.
+				{
+					if (i == 0)
+					{
+						continue;
+					}
+
+					double SpawnHeight = Height / 2;
+					if (SpawnIndex % 2 == 1)
+					{
+						[success, a] = A_SpawnItemEx("ArcanumBarrier", 0, (23 * SpawnIndex) * i, SpawnHeight + 33, flags: SXF_NOCHECKPOSITION); Blockers.Push(a);
+						[success, a] = A_SpawnItemEx("ArcanumBarrier", 0, (23 * SpawnIndex) * i, SpawnHeight + 11, flags: SXF_NOCHECKPOSITION); Blockers.Push(a);
+						[success, a] = A_SpawnItemEx("ArcanumBarrier", 0, (23 * SpawnIndex) * i, SpawnHeight - 11, flags: SXF_NOCHECKPOSITION); Blockers.Push(a);
+						[success, a] = A_SpawnItemEx("ArcanumBarrier", 0, (23 * SpawnIndex) * i, SpawnHeight - 33, flags: SXF_NOCHECKPOSITION); Blockers.Push(a);
+					}
+					else
+					{
+						[success, a] = A_SpawnItemEx("ArcanumBarrier", 0, (23 * SpawnIndex) * i, SpawnHeight + 44, flags: SXF_NOCHECKPOSITION); Blockers.Push(a);
+						[success, a] = A_SpawnItemEx("ArcanumBarrier", 0, (23 * SpawnIndex) * i, SpawnHeight + 22, flags: SXF_NOCHECKPOSITION); Blockers.Push(a);
+						[success, a] = A_SpawnItemEx("ArcanumBarrier", 0, (23 * SpawnIndex) * i, SpawnHeight, flags: SXF_NOCHECKPOSITION); Blockers.Push(a);
+						[success, a] = A_SpawnItemEx("ArcanumBarrier", 0, (23 * SpawnIndex) * i, SpawnHeight - 22, flags: SXF_NOCHECKPOSITION); Blockers.Push(a);
+						[success, a] = A_SpawnItemEx("ArcanumBarrier", 0, (23 * SpawnIndex) * i, SpawnHeight - 44, flags: SXF_NOCHECKPOSITION); Blockers.Push(a);
+					}
+				}
+				SpawnIndex++;
+			}
+			Loop;
+		Idle:
+			TNT1 A 1
+			{
+				if (--ReactionTime <= 0)
+				{
+					// [Ace] These are the first ones.
+					if (SpawnIndex == 1)
+					{
+						for (int i = 5; i > 0; --i)
+						{
+							Blockers[i - 1].SetStateLabel('Death');
+							Blockers.Pop();
+						}
+						Destroy();
+						return;
+					}
+					else
+					{
+						A_SetTics(2);
+						int VSize = Blockers.Size();
+						for (int i = VSize; i > VSize - (SpawnIndex % 2 == 1 ? 5 : 4) * 2; --i)
+						{
+							Blockers[i - 1].SetStateLabel('Death');
+							Blockers.Pop();
+						}
+						SpawnIndex--;
+					}
+				}
+			}
+			Loop;
+	}
+}
+
+class ArcanumBarrier : Actor
+{
+	override void PostBeginPlay()
+	{
+		// [Ace] I need the pivot point of the sprite.
+		A_SpriteOffset(0, -Height / 2);
+		SetOrigin((pos.x, pos.y, pos.z - (Height / 2)), false);
+		A_GiveInventory('ImmunityToFire');
+		Super.PostBeginPlay();
+	}
+
+	override void Tick()
+	{
+		A_Stop();
+
+		//AceCore.DrawXYZ(self);
+
+		Super.Tick();
+	}
+
+	Default
+	{
+		Mass 10000;
+		Radius 15;
+		Height 22;
+		+NOGRAVITY
+		+SOLID
+		+SHOOTABLE
+		+NODAMAGE
+		+NOBLOOD
+		+FORCEYBILLBOARD
+		+DONTTHRUST
+		+WALLSPRITE
+		Renderstyle "Add";
+		Scale 0;
+	}
+
+	States
+	{
+		Spawn:
+			ARBR A 1
+			{
+				if (Scale.x < 0.2)
+				{
+					Scale += (0.04, 0.04 / 1.2);
+				}
+				else
+				{
+					SetStateLabel('SpawnLoop');
+				}
+			}
+			Loop;
+		SpawnLoop:
+			ARBR A 1
+			{
+				A_SetTics(random(1, 4));
+				Alpha = frandom(0.85, 1.00);
+			}
+			Loop;
+		Death:
+			ARBR A 1
+			{
+				Scale *= 0.7;
+				if (Scale.x < 0.02)
+				{
+					Destroy();
+					return;
+				}
+			}
+			Loop;
+	}
+}

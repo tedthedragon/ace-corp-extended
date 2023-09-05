@@ -1,0 +1,75 @@
+class ThunderclapSpell : ArcanumSpell
+{
+	override int GetIndex() { return 20; }
+	override class<ArcanumSpellTree> GetTree() { return 'ArcanumTreeDestruction'; }
+	override string GetName() { return "Thunderclap"; }
+	override int GetSpellType() { return SType_Targeted; }
+	override int GetManaCost() { return 6; }
+	override string GetDescription()
+	{
+		int count = int(1 + 4 * GetExperienceFactor());
+		return String.Format("Strikes target area with \c[Gold]%i\c- lightning bolt%s.", count, count > 1 ? "s" : "");
+	}
+	override int GetMaxExperience() { return 300; }
+	override string GetTechnicalInfo() { return "Targeted, AoE, Electrical, Dangerous"; }
+	override class<ArcanumSigil> GetSigil() { return 'ThunderclapSigil'; }
+}
+
+class ThunderclapSigil : ArcanumSigil
+{
+	override void PostBeginPlay()
+	{
+		Super.PostBeginPlay();
+
+		ShotsLeft = int(1 + 4 * ExperienceFactor);
+	}
+
+	override void ActivateTargeted()
+	{
+		if (ShotsLeft == 0)
+		{
+			ReactionTime = 0;
+			return;
+		}
+
+		if (GetAge() % 8 == 0)
+		{
+			FLineTraceData Data;
+			double ExtraAngle = (!FirstShotFired ? 0 : frandom(-1.5, 1.5));
+			double ExtraPitch = (!FirstShotFired ? 0 : frandom(-1.3, 1.3));
+			LineTrace(angle + ExtraAngle, 12600, pitch + ExtraPitch, 0, 0, 0, 0, Data);
+
+			if (Data.HitType != Data.TRACE_HitNone && Data.HitType != Data.TRACE_HasHitSky)
+			{
+				Actor BSpot = Spawn("BeamSpot", Data.HitLocation - Data.HitDir, ALLOW_REPLACE);
+				BSpot.target = self;
+				BSpot.stamina = 144;
+				BSpot.angle = angle;
+				BSpot.pitch = pitch;
+			}
+			ShotsLeft--;
+			FirstShotFired = true;
+		}
+	}
+
+	override void InitRuneSlots()
+	{
+		CreateRuneSlot((0, 0), (6, 10), 1.65);
+	}
+
+	private int ShotsLeft;
+	private bool FirstShotFired;
+
+	Default
+	{
+		ReactionTime 0xFFFFFF;
+		StencilColor "77AFFF";
+	}
+
+	States
+	{
+		Spawn:
+			CRDE C 0;
+			Goto Super::Spawn;
+	}
+}

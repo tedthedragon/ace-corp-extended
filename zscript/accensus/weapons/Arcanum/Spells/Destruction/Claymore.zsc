@@ -1,0 +1,75 @@
+class ClaymoreSpell : ArcanumSpell
+{
+	override int GetIndex() { return 10; }
+	override class<ArcanumSpellTree> GetTree() { return 'ArcanumTreeDestruction'; }
+	override string GetName() { return "Claymore"; }
+	override int GetSpellType() { return SType_Targeted; }
+	override int GetManaCost() { return 5; }
+	override string GetDescription() { return "Activate the rune to create a trap that will activate when an enemy is in front of it."; }
+	override string GetTechnicalInfo() { return "Touch, Physical"; }
+	override int GetMaxExperience() { return 0; }
+	override class<ArcanumSigil> GetSigil() { return 'ClaymoreSigil'; }
+}
+
+class ClaymoreSigil : ArcanumSigil
+{
+	override void ActivateTargeted()
+	{
+		if (DetonationTicker == 0)
+		{
+			double OldAngle = angle;
+			double OldPitch = pitch;
+			for (int i = -80; i <= 80; i += 20)
+			{
+				angle = OldAngle + i;
+				pitch = random(-20, 20);
+				Actor a = AimTarget();
+
+				if (a && a.Health > 0 && Distance2D(a) < 64 && (a.bISMONSTER && !a.bFRIENDLY || deathmatch && a.player && a != master))
+				{
+					DetonationTicker = 7;
+					PlayCastSound(self, "Arcanum/Destruction/Claymore");
+					break;
+				}
+			}
+			angle = OldAngle;
+			pitch = OldPitch;
+		}
+		else if (DetonationTicker > 0)
+		{
+			DetonationTicker--;
+			if (DetonationTicker == 0)
+			{
+				Actor xpl = Spawn("WallChunker", pos);
+				xpl.target = tracer;
+				xpl.master = master;
+
+				Spawn("HDExplosion", pos);
+				A_SpawnChunks("HDB_frag", 300, 100, 700, 70, 30);
+				ReactionTime = 0;
+			}
+		}
+		ReactionTime--;
+	}
+
+	override void InitRuneSlots()
+	{
+		CreateRuneSlot((0, -8.5), (6.5, 10.83), 2.0);
+	}
+
+	Default
+	{
+		+ARCANUMSIGIL.DONTPITCH
+		ReactionTime 35 * 60 * 15;
+		StencilColor "77AFFF";
+	}
+
+	int DetonationTicker;
+
+	States
+	{
+		Spawn:
+			CRDE B 0;
+			Goto Super::Spawn;
+	}
+}

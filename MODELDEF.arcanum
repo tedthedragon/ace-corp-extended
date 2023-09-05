@@ -1,0 +1,81 @@
+Model ArcanumRuneGlyph
+{
+	Path "Models" Model 0 "ArcanumPlane.obj" DONTCULLBACKFACES USEACTORPITCH
+	SurfaceSkin 0 0 "Runes/ARUNA0.png" FrameIndex ARUN A 0 0
+	SurfaceSkin 0 0 "Runes/ARUNB0.png" FrameIndex ARUN B 0 0
+	SurfaceSkin 0 0 "Runes/ARUNC0.png" FrameIndex ARUN C 0 0
+	SurfaceSkin 0 0 "Runes/ARUND0.png" FrameIndex ARUN D 0 0
+	SurfaceSkin 0 0 "Runes/ARUNE0.png" FrameIndex ARUN E 0 0
+	SurfaceSkin 0 0 "Runes/ARUNF0.png" FrameIndex ARUN F 0 0
+	SurfaceSkin 0 0 "Runes/ARUNG0.png" FrameIndex ARUN G 0 0
+	SurfaceSkin 0 0 "Runes/ARUNH0.png" FrameIndex ARUN H 0 0
+	SurfaceSkin 0 0 "Runes/ARUNI0.png" FrameIndex ARUN I 0 0
+	SurfaceSkin 0 0 "Runes/ARUNJ0.png" FrameIndex ARUN J 0 0
+	SurfaceSkin 0 0 "Runes/ARUNK0.png" FrameIndex ARUN K 0 0
+	SurfaceSkin 0 0 "Runes/ARUNL0.png" FrameIndex ARUN L 0 0
+	SurfaceSkin 0 0 "Runes/ARUNM0.png" FrameIndex ARUN M 0 0
+	SurfaceSkin 0 0 "Runes/ARUNN0.png" FrameIndex ARUN N 0 0
+	SurfaceSkin 0 0 "Runes/ARUNO0.png" FrameIndex ARUN O 0 0
+	SurfaceSkin 0 0 "Runes/ARUNP0.png" FrameIndex ARUN P 0 0
+	SurfaceSkin 0 0 "Runes/ARUNQ0.png" FrameIndex ARUN Q 0 0
+	SurfaceSkin 0 0 "Runes/ARUNR0.png" FrameIndex ARUN R 0 0
+	SurfaceSkin 0 0 "Runes/ARUNS0.png" FrameIndex ARUN S 0 0
+	SurfaceSkin 0 0 "Runes/ARUNT0.png" FrameIndex ARUN T 0 0
+	SurfaceSkin 0 0 "Runes/ARUNU0.png" FrameIndex ARUN U 0 0
+	SurfaceSkin 0 0 "Runes/ARUNV0.png" FrameIndex ARUN V 0 0
+	SurfaceSkin 0 0 "Runes/ARUNW0.png" FrameIndex ARUN W 0 0
+	SurfaceSkin 0 0 "Runes/ARUNX0.png" FrameIndex ARUN X 0 0
+	SurfaceSkin 0 0 "Runes/ARUNY0.png" FrameIndex ARUN Y 0 0
+	SurfaceSkin 0 0 "Runes/ARUNZ0.png" FrameIndex ARUN Z 0 0
+}
+
+// [Ace; 07.01.22] I don't care enough anymore to always keep this alphabetically sorted.
+Model ArcanumSigilAdd
+{
+	Path "Models" Model 0 "ArcanumPlane.obj" DONTCULLBACKFACES USEACTORPITCH
+	SurfaceSkin 0 0 "FireballSigil_d.png" FrameIndex CRDE A 0 0
+	SurfaceSkin 0 0 "ClaymoreSigil_d.png" FrameIndex CRDE B 0 0
+	SurfaceSkin 0 0 "ThunderclapSigil_d.png" FrameIndex CRDE C 0 0
+	SurfaceSkin 0 0 "HammerfistSigil_d.png" FrameIndex CRDE D 0 0
+	Scale 2.0 2.0 2.0
+	SurfaceSkin 0 0 "ImmolationSigil_d.png" FrameIndex CRDE E 0 0
+	SurfaceSkin 0 0 "VoidstormSigil_d.png" FrameIndex CRDE F 0 0
+	
+	Scale 1.0 1.0 1.0
+	SurfaceSkin 0 0 "RevitalizationSigil_d.png" FrameIndex CRRE A 0 0
+	SurfaceSkin 0 0 "LifeForceSigil_d.png" FrameIndex CRRE B 0 0
+	SurfaceSkin 0 0 "TransfusionSigil_d.png" FrameIndex CRRE C 0 0
+	Scale 2.0 2.0 2.0
+	SurfaceSkin 0 0 "ResurrectSigil_d.png" FrameIndex CRRE D 0 0
+	Scale 1.0 1.0 1.0
+	SurfaceSkin 0 0 "SoulGuardSigil_d.png" FrameIndex CRRE E 0 0
+	Scale 2.0 2.0 2.0
+	// SurfaceSkin 0 0 "RevitalizationSigil_d.png" FrameIndex CRRE F 0 0
+	SurfaceSkin 0 0 "InvulnerabilitySigil_d.png" FrameIndex CRRE G 0 0
+	Scale 1.0 1.0 1.0
+	SurfaceSkin 0 0 "RageSigil_d.png" FrameIndex CRRE H 0 0
+
+	Scale 1.0 1.0 1.0
+	SurfaceSkin 0 0 "FarReachSigil_d.png" FrameIndex CRAL A 0 0
+	SurfaceSkin 0 0 "WorldBreakerSigil_d.png" FrameIndex CRAL B 0 0
+	SurfaceSkin 0 0 "ShieldSigil_d.png" FrameIndex CRAL C 0 0
+	Scale 2.0 2.0 2.0
+	SurfaceSkin 0 0 "HasteSigil_d.png" FrameIndex CRAL D 0 0
+	Scale 1.0 1.0 1.0
+	SurfaceSkin 0 0 "HoradricMalusSigil_d.png" FrameIndex CRAL E 0 0
+	SurfaceSkin 0 0 "FeatherSigil_d.png" FrameIndex CRAL F 0 0
+	SurfaceSkin 0 0 "ReenergizeSigil_d.png" FrameIndex CRAL G 0 0
+	SurfaceSkin 0 0 "DisplacementSigil_d.png" FrameIndex CRAL H 0 0
+	Scale 2.0 2.0 2.0
+	SurfaceSkin 0 0 "MassRecallSigil_d.png" FrameIndex CRAL J 0 0
+
+	Scale 1.0 1.0 1.0
+	SurfaceSkin 0 0 "GhostSquadSigil_d.png" FrameIndex CRCN A 0 0
+	Scale 2.0 2.0 2.0
+	SurfaceSkin 0 0 "HolyForceSigil_d.png" FrameIndex CRCN B 0 0
+	Scale 1.0 1.0 1.0
+	SurfaceSkin 0 0 "BarrierSigil_d.png" FrameIndex CRCN C 0 0
+	SurfaceSkin 0 0 "BridgeSigil_d.png" FrameIndex CRCN D 0 0
+	SurfaceSkin 0 0 "CandlelightSigil_d.png" FrameIndex CRCN E 0 0
+	SurfaceSkin 0 0 "GuardianOrb_d.png" FrameIndex CRCN F 0 0
+}

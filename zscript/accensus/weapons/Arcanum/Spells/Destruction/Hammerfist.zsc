@@ -1,0 +1,119 @@
+class HammerfistSpell : ArcanumSpell
+{
+	override int GetIndex() { return 30; }
+	override class<ArcanumSpellTree> GetTree() { return 'ArcanumTreeDestruction'; }
+	override string GetName() { return "Hammerfist"; }
+	override int GetSpellType() { return SType_Targeted; }
+	override int GetManaCost() { return 60; }
+	override string GetDescription() { return String.Format("A giant fist drops down from the sky and crushes a single target."); }
+	override string GetTechnicalInfo() { return "Targeted, Physical"; }
+	override int GetMaxExperience() { return 0; }
+	override class<ArcanumSigil> GetSigil() { return 'HammerfistSigil'; }
+}
+
+class HammerfistSigil : ArcanumSigil
+{
+	override void ActivateTargeted()
+	{
+		FLineTraceData Data;
+		LineTrace(angle, HDCONST_ONEMETRE * 300, pitch, TRF_SOLIDACTORS | TRF_THRUSPECIES, 0, 0, 0, Data);
+		if (Data.HitActor && Data.HitActor != master && Data.HitActor.bISMONSTER && Data.HitActor.Health > 0)
+		{
+			PlayCastSound(self, "Arcanum/Destruction/Hammerfist");
+			let Fist = HammerfistFist(Spawn('HammerfistFist', (Data.HitActor.pos.x, Data.HitActor.pos.y, Data.HitActor.ceilingz - 4)));
+			Fist.target = master;
+			Fist.vel.z = -20;
+			Fist.tracer = Data.HitActor;
+		}
+	}
+
+	override void InitRuneSlots()
+	{
+		CreateRuneSlot((0, 0), (6, 10), 1.75);
+	}
+
+	Default
+	{
+		StencilColor "716E80";
+	}
+
+	States
+	{
+		Spawn:
+			CRDE D 0;
+			Goto Super::Spawn;
+	}
+}
+
+class HammerfistFist : HDActor // [Ace] A fistful of redundancy.
+{
+	override bool CanCollideWith(Actor other, bool passive)
+	{
+		return other == tracer ? Super.CanCollideWith(other, passive) : false;
+	}
+	
+	override int SpecialMissileHit(Actor victim)
+	{
+		if (victim == tracer)
+		{
+			let Necro = Necromancer(victim);
+			if (Necro && !Necro.bFRIENDLY && Necro.CheckInventory("HolyCompeller", 1))
+			{
+//				Necro.HitsLeft = 0;
+			}
+			return Super.SpecialMissileHit(victim);
+		}
+		return 1;
+	}
+
+	override void Tick()
+	{
+		if (InStateSequence(CurState, FindState('Spawn')))
+		{
+			if (tracer)
+			{
+				SetOrigin((tracer.pos.x, tracer.pos.y, pos.z), true);
+			}
+		}
+
+		vel.z = clamp(vel.z, -50, 50);
+
+		Super.Tick();
+	}
+
+	private bool HasHit;
+
+	Default
+	{
+		Radius 2;
+		Height 2;
+		Projectile;
+		DamageFunction 20000;
+		DamageType 'Bashing';
+		-NOGRAVITY
+		Gravity 2.0;
+		Scale 2.0;
+	}
+
+	States
+	{
+		Spawn:
+			HMFS T -1;
+			Stop;
+		Death:
+			HMFS T 1
+			{
+				DistantQuaker.Quake(self, 5, 50, 2048, 8, 128, 256, 256);
+				A_SpawnChunks("BigWallChunk", 50, 4, 12);
+				Spawn("HDExplosion", pos);
+				HDActor.HDBlast(self, fragradius: 128);
+				HDActor.HDBlast(self, fragradius: 128);
+				A_Stop();
+				SetOrigin((pos.x, pos.y, floorz), false);
+				SetStateLabel("DeathStop");
+			}
+		DeathStop:
+			HMFS T 1 A_FadeOut(0.06);
+			Loop;
+	}
+}

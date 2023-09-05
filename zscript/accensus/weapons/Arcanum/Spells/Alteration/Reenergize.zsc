@@ -1,0 +1,84 @@
+class ReenergizeSpell : ArcanumSpell
+{
+	override int GetIndex() { return 60; }
+	override class<ArcanumSpellTree> GetTree() { return 'ArcanumTreeAlteration'; }
+	override string GetName() { return "Reenergize"; }
+	override int GetSpellType() { return SType_SelfOrMass | SType_Targeted; }
+	override int GetManaCost() { return 30; }
+	override string GetDescription() { return String.Format("Restores up to \c[Gold]%i\c- battery charge, filling partial batteries first.", int(20 + 80 * GetExperienceFactor())); }
+	override string GetTechnicalInfo() { return "Self, Targeted, Touch"; }
+	override int GetMaxExperience() { return 200; }
+	override class<ArcanumSigil> GetSigil() { return 'ReenergizeSigil'; }
+}
+
+
+class ReenergizeSigil : ArcanumSigil
+{
+	override void ActivateTargeted()
+	{
+		Actor a = AimTarget();
+		if (a && a.Health > 0 && Distance3D(a) <= HDCONST_ONEMETRE * 2)
+		{
+			RechargeBatteries(a);
+		}
+	}
+
+	override void ActivateSelfOrMass()
+	{
+		if (master)
+		{
+			RechargeBatteries(master);
+		}
+	}
+
+	private void RechargeBatteries(Actor other)
+	{
+		bool hasPlayedSound;
+		int chargesLeft = int(20 + 80 * ExperienceFactor);
+		let stack = HDBattery(other.FindInventory("HDBattery"));
+		if (stack)
+		{
+			while (chargesLeft > 0)
+			{
+				int index = AceCore.GetHighestMag(stack, stack.MaxPerUnit);
+				if (index > -1)
+				{
+					if (!hasPlayedSound)
+					{
+						PlayCastSound(self, "Arcanum/Alteration/Reenergize");
+						hasPlayedSound = true;
+					}
+					int amountToMax = stack.MaxPerUnit - stack.Mags[index];
+					stack.Mags[index] += min(chargesLeft, amountToMax);
+					chargesLeft -= amountToMax;
+				}
+				else
+				{
+					break;
+				}
+			}
+		}
+	}
+
+	override void InitRuneSlots()
+	{
+		vector2 Size = (2.2, 3.66);
+		CreateRuneSlot((-4.6, 8.40), Size, 0.65); CreateRuneSlot((4.6, 8.40), Size, 0.65);
+		CreateRuneSlot((-4.6, -8.40), Size, 0.65); CreateRuneSlot((4.6,- 8.40), Size, 0.65);
+
+		CreateRuneSlot((-8.5, 4.5), Size, 0.65); CreateRuneSlot((8.5, 4.5), Size, 0.65);
+		CreateRuneSlot((-8.5, -4.5), Size, 0.65); CreateRuneSlot((8.5,- 4.5), Size, 0.65);
+	}
+
+	Default
+	{
+		StencilColor "33FF00";
+	}
+
+	States
+	{
+		Spawn:
+			CRAL G 0;
+			Goto Super::Spawn;
+	}
+}

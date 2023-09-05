@@ -1,0 +1,125 @@
+class ArcanumSpellBrain : Thinker
+{
+	void InitSpells(bool reset)
+	{
+		if (reset)
+		{
+			Trees.Clear();
+		}
+		
+		for (int i = 0; i < AllClasses.Size(); ++i)
+		{
+			if (AllClasses[i] is 'ArcanumSpell' && AllClasses[i].GetClassName() != 'ArcanumSpell')
+			{
+				ArcanumSpell spell = ArcanumSpell(new(AllClasses[i]));
+
+				int treesSize = Trees.Size();
+				int treeIndex = TreesSize;
+				for (int j = 0; j < treesSize; ++j)
+				{
+					if (Trees[j].GetClass() == spell.GetTree())
+					{
+						treeIndex = j;
+						break;
+					}
+				}
+
+				if (treeIndex == trees.Size()) // [Ace] Brand new tree, never used.
+				{
+					ArcanumSpellTree Tree = ArcanumSpellTree(new(spell.GetTree()));
+					tree.Spells.Push(spell);
+					trees.Push(Tree);
+				}
+				else
+				{
+					// [Ace] Don't duplicate spells.
+					if (!Trees[treeIndex].SpellExists(spell.GetClass()))
+					{
+						Trees[treeIndex].InsertSpell(spell);
+					}
+				}
+			}
+		}
+
+		// [Ace] >using bubble sort in 2022
+		// Well, in reality I am hardly looking for efficiency in something I do less than once a month.
+		// For something that has 10 elements in it, it Literally Doesn't Matter(tm).
+		for (int i = 0; i < Trees.Size(); ++i)
+		{
+			int spellSize = Trees[i].Spells.Size();
+			for (int j = 0; j < spellSize - 1; ++j)
+			{
+				for (int k = j + 1; k < spellSize; ++k)
+				{
+					// [Ace] Remove duplicates.
+					if (Trees[i].Spells[j].GetName() == Trees[i].Spells[k].GetName())
+					{
+						Trees[i].Spells[k].Destroy();
+						Trees[i].Spells.Delete(k--);
+						spellSize--;
+						continue;
+					}
+					if (Trees[i].Spells[j].GetIndex() > Trees[i].Spells[k].GetIndex())
+					{
+						let swap = Trees[i].Spells[j];
+						Trees[i].Spells[j] = Trees[i].Spells[k];
+						Trees[i].Spells[k] = swap;
+					}
+				}
+			}
+		}
+	}
+
+	static ArcanumSpellBrain Get(int num)
+	{
+		ThinkerIterator it = ThinkerIterator.Create('ArcanumSpellBrain', STAT_STATIC);
+		ArcanumSpellBrain Brain;
+		while ((Brain = ArcanumSpellBrain(it.Next())))
+		{
+			if (Brain.TrackedPlayer == num)
+			{
+				return Brain;
+			}
+		}
+
+		// [Ace] Create a new one if none exist.
+		Brain = new('ArcanumSpellBrain');
+		Brain.ChangeStatNum(Thinker.STAT_STATIC);
+		Brain.TrackedPlayer = num;
+		return Brain;
+	}
+
+	int SpellCountInTree(class<ArcanumSpellTree> tree)
+	{
+		for (int i = 0; i < Trees.Size(); ++i)
+		{
+			if (Trees[i].GetClass() == tree)
+			{
+				return Trees[i].Spells.Size();
+			}
+		}
+
+		return 0;
+	}
+
+	Array<ArcanumSpellTree> Trees;
+	int TrackedPlayer;
+}
+
+class ArcanumHandler : EventHandler
+{
+	override void PlayerEntered(PlayerEvent e)
+	{
+		ArcanumSpellBrain brain = ArcanumSpellBrain.Get(e.PlayerNumber);
+		brain.InitSpells(false); // [Ace] Because PostBeginPlay seems to be called a bit too late on it. In fact, it doesn't seem to be called at all.
+	}
+
+	override void NetworkProcess(ConsoleEvent e)
+	{
+		if (e.Name ~== "ARC_ReInitSpells")
+		{
+			ArcanumSpellBrain brain = ArcanumSpellBrain.Get(e.Player);
+			brain.InitSpells(e.Args[0]);
+		}
+	}
+}

@@ -29,6 +29,11 @@ const HDLD_WYVERN             = "wyv";
 #include "zscript/accensus/weapons/Blackhawk/bolts/electricBolts.zs"
 #include "zscript/accensus/weapons/Blackhawk/bolts/nuclearBolts.zs"
 
+#include "zscript/accensus/weapons/Arcanum/ArcanumSpell.zsc"
+#include "zscript/accensus/weapons/Arcanum/ArcanumTome.zsc"
+#include "zscript/accensus/weapons/Arcanum/ManaBarrel.zsc"
+#include "zscript/accensus/weapons/Arcanum/SpellBrain.zsc"
+
 #include "zscript/accensus/weapons/Blackjack/blackjack.zs"
 
 #include "zscript/accensus/weapons/Gungnir/gungnir.zs"

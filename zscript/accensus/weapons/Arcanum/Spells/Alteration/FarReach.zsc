@@ -1,0 +1,69 @@
+class FarReachSpell : ArcanumSpell
+{
+	override int GetIndex() { return 0; }
+	override class<ArcanumSpellTree> GetTree() { return 'ArcanumTreeAlteration'; }
+	override string GetName() { return "Far Reach"; }
+	override int GetSpellType() { return SType_Targeted; }
+	override int GetManaCost() { return 10; }
+	override string GetDescription() { return String.Format("Open doors, trigger switches, and pick up items within a range of \c[Gold]%.1f\c-m.\nDisarms ammo boxes.\n\n\c[Fire]You can launch yourself forward with this spell. Use with caution.\c-", 20 + 40 * GetExperienceFactor()); }
+	override string GetTechnicalInfo() { return "Targeted"; }
+	override int GetMaxExperience() { return 250; }
+	override class<ArcanumSigil> GetSigil() { return 'FarReachSigil'; }
+}
+
+class FarReachSigil : ArcanumSigil
+{
+	override void ActivateTargeted()
+	{
+		FLineTraceData data;
+		LineTrace(angle, HDCONST_ONEMETRE * (20 + 40 * ExperienceFactor), pitch, TRF_SOLIDACTORS | TRF_THRUSPECIES, 0, 0, 0, data);
+
+		if (data.HitLine && data.HitLine.Activate(master, 0, SPAC_Use))
+		{
+			PlayCastSound(self, "Arcanum/Alteration/FarReach");
+		}
+
+		if (data.HitActor && data.HitActor.Mass < 20000)
+		{
+			PlayCastSound(self, "Arcanum/Alteration/FarReach");
+
+			if (data.HitActor != master)
+			{
+				GrabThinker.Grab(master, data.HitActor);
+				if (data.HitActor is 'HDAmBox')
+				{
+					HDAmBox(data.HitActor).disarmed = true;
+				}
+				if (!data.HitActor.tracer)
+				{
+					data.HitActor.tracer = master;
+				}
+			}
+			else
+			{
+				master.angle = angle;
+				master.pitch = pitch;
+				master.A_ChangeVelocity(40 * cos(pitch), 0, 40 * sin(-pitch), CVF_RELATIVE);
+				master.DamageMobj(master, master, 20, 'Internal');
+				HDPlayerPawn(master).lastvel = master.vel;
+			}
+		}
+	}
+
+	override void InitRuneSlots()
+	{
+		CreateRuneSlot((0, 0), (6, 10), 2.1);
+	}
+
+	Default
+	{
+		StencilColor "FFFF99";
+	}
+
+	States
+	{
+		Spawn:
+			CRAL A 0;
+			Goto Super::Spawn;
+	}
+}

@@ -1,0 +1,123 @@
+class DisplacementSpell : ArcanumSpell
+{
+	override int GetIndex() { return 70; }
+	override class<ArcanumSpellTree> GetTree() { return 'ArcanumTreeAlteration'; }
+	override string GetName() { return "Displacement"; }
+	override int GetSpellType() { return SType_SelfOrMass; }
+	override int GetManaCost() { return 30; }
+	override string GetDescription() { return "Partly severs your link to this world and gives you the ability to fly for 4 seconds, then teleports you to where you cast the spell. Enemies cannot see you while being displaced."; }
+	override string GetTechnicalInfo() { return "Self"; }
+	override int GetMaxExperience() { return 0; }
+	override class<ArcanumSigil> GetSigil() { return 'DisplacementSigil'; }
+}
+
+class DisplacementSigil : ArcanumSigil
+{
+	override void ActivateSelfOrMass()
+	{
+		PlayCastSound(self, "Arcanum/Alteration/Displacement/Start");
+		master.A_GiveInventory("DisplacementSpellPower");
+	}
+
+	override void InitRuneSlots()
+	{
+		vector2 Size = (3, 5);
+		CreateRuneSlot((-16.4, 0), Size, 0.9);
+		CreateRuneSlot((0, 16.4), Size, 0.9);
+		CreateRuneSlot((16.4, 0), Size, 0.9);
+		CreateRuneSlot((0, -16.4), Size, 0.9);
+	}
+
+	Default
+	{
+		StencilColor "8EFACA";
+	}
+
+	States
+	{
+		Spawn:
+			CRAL H 0;
+			Goto Super::Spawn;
+	}
+}
+
+class DisplacementSpellPower : Powerup
+{
+	override void InitEffect()
+	{
+		Super.InitEffect();
+
+		let plr = HDPlayerPawn(owner);
+		CastPos = plr.pos;
+		//WoundCount = plr.woundcount;
+		OldWoundCount = plr.oldwoundcount;
+		//UnstableWoundCount = plr.unstablewoundcount;
+		BurnCount = plr.burncount;
+		AggravatedDamage = plr.aggravateddamage;
+
+		ToggleFlags(true);
+
+		if (owner.pos.z <= owner.floorz)
+		{
+			owner.vel.z = 4;
+		}
+	}
+
+	override void EndEffect()
+	{
+		Super.EndEffect();
+		if (!owner || !owner.player)
+		{
+			return;
+		}
+
+		let plr = HDPlayerPawn(owner);
+		plr.SetOrigin(CastPos, true);
+		plr.lastvel = (0, 0, 0);
+		plr.vel = (0, 0, 0);
+		plr.pitch = 0;
+
+		//plr.woundcount = WoundCount;
+		plr.oldwoundcount = OldWoundCount;
+		//plr.unstablewoundcount = UnstableWoundCount;
+		plr.burncount = BurnCount;
+		plr.aggravateddamage = AggravatedDamage;
+
+		ArcanumSigil.PlayCastSound(owner, "Arcanum/Alteration/Displacement/End");
+
+		ToggleFlags(false);
+	}
+
+	private void ToggleFlags(bool val)
+	{
+		owner.bFLY = val;
+		owner.bNOGRAVITY = val;
+		owner.bINVISIBLE = val;
+		owner.bSHADOW = val;
+		owner.bNOTARGET = val;
+		owner.bSHOOTABLE = !val;
+	}
+
+	override Color GetBlend()
+	{
+		double StartAlpha = EffectTics / double(default.EffectTics);
+
+		return Color(int(BlendColor.a * StartAlpha), BlendColor.r, BlendColor.g, BlendColor.b);
+	}
+
+	// [Ace] Save these because otherwise they're reset due to the removal of the SHOOTABLE flag.
+	private int WoundCount;
+	private int OldWoundCount;
+	private int UnstableWoundCount;
+	private int BurnCount;
+	private int AggravatedDamage;
+	private Vector3 CastPos;
+
+	Default
+	{
+		Powerup.Duration -4;
+		Powerup.Color "8EFACA", 0.3;
+		+INVENTORY.NOSCREENBLINK
+		+INVENTORY.ALWAYSPICKUP
+	}
+}

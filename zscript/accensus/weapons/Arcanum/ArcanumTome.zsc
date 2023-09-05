@@ -1,0 +1,619 @@
+class HDArcanumTome : HDWeapon
+{
+	enum ArcanumTomeFlags
+	{
+		ATF_InSpellMenu = 1 << 0
+	}
+
+	enum ArcanumTomeProperties
+	{
+		ATProp_Flags,
+		ATProp_SelectedTree,
+		ATProp_SelectedSpell,
+		ATProp_Mana
+	}
+
+	override void DoEffect()
+	{
+		Super.DoEffect();
+		if (!CoreHandler)
+		{
+			CoreHandler = AceCoreHandler(EventHandler.Find('AceCoreHandler'));
+		}
+		
+		for (int i = 0; i < CoreHandler.Requests.Size(); ++i)
+		{
+			InterfaceRequest req = CoreHandler.Requests[i];
+			if (req.Receiver == self)
+			{
+				switch (req.RequestName)
+				{
+					case 'DrainChargeArcanum':
+					{
+						int amt = req.Arg.ToInt();
+						if (amt != 0)
+						{
+							WeaponStatus[ATProp_Mana] = clamp(WeaponStatus[ATProp_Mana] + amt, 0, HDHM_BALL);
+						}
+						req.Remove(); i--; // [Ace] req.Remove() will shift the index. We need to make sure the next element is not skipped.
+						break;
+					}
+				}
+			}
+		}
+
+		int curBlues = owner.CountInv('HealingMagic');
+		bool hasCube = AceCore.CheckForItem(owner, 'HDSoulCube');
+		if (curBlues > 0 && WeaponStatus[ATProp_Mana] < HDHM_BALL)
+		{
+			double baseSpeed = HDHM_BALL / (35 * 60 * (hasCube ? 15.0 : 20.0));
+			double speedFac = max(0.5, curBlues / double(HDHM_BALL));
+
+			if (owner.FindInventory('PowerInvulnerable'))
+			{
+				speedFac *= 5;
+			}
+
+			AccumulatedBlues += baseSpeed * speedFac;
+			if (AccumulatedBlues >= 1)
+			{
+				int toCharge = int(AccumulatedBlues);
+				owner.A_TakeInventory('HealingMagic', toCharge);
+				WeaponStatus[ATProp_Mana] = min(WeaponStatus[ATProp_Mana] + toCharge, HDHM_BALL);
+				AccumulatedBlues %= 1.0; // [Ace] Don't lose fractions.
+			}
+		}
+		else
+		{
+			AccumulatedBlues = 0;
+		}
+	}
+
+	override void PreTravelled()
+	{
+		Super.PreTravelled();
+
+		int amt = min(HDHM_BALL - WeaponStatus[ATProp_Mana], owner.CountInv('HealingMagic'));
+		if (amt > 0)
+		{
+			WeaponStatus[ATProp_Mana] += amt;
+			owner.A_TakeInventory('HealingMagic', amt);
+		}
+	}
+
+	override bool AddSpareWeapon(actor newowner) { return AddSpareWeaponRegular(newowner); }
+	override HDWeapon GetSpareWeapon(actor newowner , bool reverse, bool doselect) { return GetSpareWeaponRegular(newowner, reverse, doselect); }
+	override double GunMass() { return 4; }
+	override double WeaponBulk() { return 20; }
+	override string, double GetPickupSprite() { return "ARCTZ0", 1.0; }
+	override string GetHelpText()
+	{
+		string HText = WEPHELP_FIRE.."  Place rune\n"
+		..WEPHELP_ALTFIRE.."  Create spell circle\n"
+		..WEPHELP_ZOOM.."  Spell manager";
+
+		if (WeaponStatus[ATProp_Flags] & ATF_InSpellMenu)
+		{
+			HText = WEPHELP_FIRE.." or "..WEPHELP_ALTFIRE.."  Cycle spells\n"
+			..WEPHELP_FIREMODE.."+"..WEPHELP_FIRE.." or "..WEPHELP_ALTFIRE.."  Cycle spell trees\n"
+			..WEPHELP_ZOOM.."  Exit spell manager";
+		}
+
+		return HText;
+	}
+
+	override void DrawHUDStuff(HDStatusBar sb, HDWeapon hdw, HDPlayerPawn hpl)
+	{
+		if (!hpl)
+		{
+			return;
+		}
+		
+		ArcanumSpell selSpell = GetSelectedSpell();
+		selSpell.DrawHUDStuff(sb, hpl, self);
+
+		// [Ace] Ponder this mana orb.
+		if (sb.hudlevel == 1)
+		{
+			double fillFac = hdw.WeaponStatus[ATProp_Mana] / double(HDHM_BALL);
+
+			static const int Lengths[] = { 3, 7, 9, 9, 11, 11, 11, 9, 9, 7, 3 };
+			for (int i = 0; i < int(11 * fillFac); ++i)
+			{
+				sb.Fill(0xFF0022FF, -55 - Lengths[i], -5 - i * 2, Lengths[i] * 2, 2, sb.DI_SCREEN_CENTER_BOTTOM);
+			}
+
+			if (hpl.CountInv('HealingMagic') > 0)
+			{
+				sb.Fill(0xFF0022FF, -70, -7, 6, 2, sb.DI_SCREEN_CENTER_BOTTOM);
+				sb.Fill(0xFF0022FF, -68, -9, 2, 6, sb.DI_SCREEN_CENTER_BOTTOM);
+			}
+		}
+
+		Actor ptr = SpiedActor ? SpiedActor : Actor(hpl);
+		Array<ArcanumIndicator> indicators;
+		int totalIndicators = 0;
+		for (int i = 0; i < SpellStorage.Trees.Size(); ++i)
+		{
+			for (int j = 0; j < SpellStorage.Trees[i].Spells.Size(); ++j)
+			{
+				string icon; class<Powerup> cls;
+				[icon, cls] = SpellStorage.Trees[i].Spells[j].GetIndicatorInfo();
+				if (icon != "" && cls && ptr.FindInventory(cls))
+				{
+					let ind = new('ArcanumIndicator');
+					ind.Icon = icon;
+					ind.Pos = (-115 - 20 * (totalIndicators % 5), -5 - 20 * (totalIndicators / 5));
+					ind.Col = 0xFF000000 | GetDefaultByType(SpellStorage.Trees[i].Spells[j].GetSigil()).fillcolor;
+					indicators.Push(ind);
+					totalIndicators++;
+				}
+			}
+		}
+		for (int i = 0; i < indicators.Size(); ++i)
+		{
+			sb.DrawImage(indicators[i].Icon, indicators[i].Pos, sb.DI_SCREEN_CENTER_BOTTOM | sb.DI_ITEM_CENTER_BOTTOM, 0.8, (15, 15), col: indicators[i].Col);
+		}
+
+		if (!(hdw.WeaponStatus[ATProp_Flags] & ATF_InSpellMenu))
+		{
+			return;
+		}
+
+		if (!TitleFont)
+		{
+			TitleFont = HudFont.Create("SPTTLFNT");
+		}
+		if (!DescFont)
+		{
+			DescFont = HUDFont.Create("SPDSCFNT");
+		}
+		if (!ExpFont)
+		{
+			ExpFont = HUDFont.Create("SPDSCFNT", 6, Mono_CellCenter);
+		}
+
+		int baseOffset = -100;
+
+		ArcanumSpellTree SelTree = SpellStorage.Trees[hdw.WeaponStatus[ATProp_SelectedTree]];
+		sb.DrawString(TitleFont, SelTree.GetName(), (-140, baseOffset), sb.DI_SCREEN_CENTER | sb.DI_TEXT_ALIGN_LEFT);
+		sb.DrawString(DescFont, SelTree.GetDescription(), (-140, baseOffset + 20), sb.DI_SCREEN_CENTER | sb.DI_TEXT_ALIGN_LEFT, Font.CR_WHITE, 1.0, 280, 1);
+
+		sb.DrawString(TitleFont, "Spells", (-140, baseOffset + 90), sb.DI_SCREEN_CENTER | sb.DI_TEXT_ALIGN_LEFT);
+		for (int i = 0; i < SelTree.Spells.Size(); ++i)
+		{
+			ArcanumSpell CurSpell = SelTree.Spells[i];
+			sb.DrawString(DescFont, CurSpell.GetName(), (-140, baseOffset + 110 + 10 * i), sb.DI_SCREEN_CENTER | sb.DI_TEXT_ALIGN_LEFT, CurSpell == SelSpell ? Font.CR_GOLD : Font.CR_WHITE);
+		}
+		
+		int yOff = baseOffset + 90;
+		sb.DrawString(TitleFont, selSpell.GetName(), (-40, yOff), sb.DI_SCREEN_CENTER | sb.DI_TEXT_ALIGN_LEFT, Font.CR_TEAL);
+		if (selSpell.GetMaxExperience() > 0)
+		{
+			sb.DrawString(DescFont, "Experience", (-40, yOff + 20), sb.DI_SCREEN_CENTER | sb.DI_TEXT_ALIGN_LEFT, Font.CR_GOLD);
+			string expStr = "[";
+			for (int i = 0; i < 16; ++i)
+			{
+				string notch = " ";
+				if (i < floor(16 * selSpell.GetExperienceFactor()))
+				{
+					notch = "=";
+				}
+				expStr = expStr..notch;
+			}
+			expStr = expStr.."]";
+			sb.DrawString(ExpFont, expStr, (14, yOff + 20), sb.DI_SCREEN_CENTER | sb.DI_TEXT_ALIGN_LEFT, Font.CR_WHITE);
+			yOff += 10;
+		}
+		
+		sb.DrawString(DescFont, selSpell.GetTechnicalInfo(), (-40, yOff + 20), sb.DI_SCREEN_CENTER | sb.DI_TEXT_ALIGN_LEFT, Font.CR_OLIVE);
+
+		double mult = AceCore.CheckForItem(hpl, "HDSoulCube") ? 0.80 : 1.0;
+		int cost = int(selSpell.GetManaCost() * mult);
+
+		string str = String.Format("\c[ArcanumReqBlue]%i\c-", cost);
+		sb.DrawString(DescFont, "\c[DarkGray]Cost: "..str, (-40, yOff + 30), sb.DI_SCREEN_CENTER | sb.DI_TEXT_ALIGN_LEFT);
+		sb.DrawString(DescFont, selSpell.GetDescription(), (-40, yOff + 50), sb.DI_SCREEN_CENTER | sb.DI_TEXT_ALIGN_LEFT, Font.CR_WHITE, 1.0, 180, 1);
+	}
+
+	override void DrawSightPicture(HDStatusBar sb, HDWeapon hdw, HDPlayerPawn hpl, bool sightbob, vector2 bob, double fov, bool scopeview, actor hpc, string whichdot)
+	{
+		int cx, cy, cw, ch;
+		[cx, cy, cw, ch] = Screen.GetClipRect();
+		sb.SetClipRect(-16 + bob.x, -16 + bob.y, 32, 32, sb.DI_SCREEN_CENTER);
+		vector2 bob2 = bob * 2;
+		bob2.y = clamp(bob2.y, -8, 8);
+		sb.DrawImage("ARCNFRNT", (0, -2) + bob2, sb.DI_SCREEN_CENTER | sb.DI_ITEM_TOP, alpha: 0.9);
+		sb.SetClipRect(cx, cy, cw, ch);
+	}
+
+	override void LoadoutConfigure(string input)
+	{
+		int StartBlues = GetLoadoutVar(input, "blues", 4);
+		if (StartBlues > 0)
+		{
+			BluesToGive = StartBlues;
+		}
+	}
+
+	override void DetachFromOwner()
+	{
+		WeaponStatus[ATProp_Flags] &= ~ATF_InSpellMenu;
+
+		Super.DetachFromOwner();
+	}
+
+	override void AttachToOwner(Actor other)
+	{
+		Super.AttachToOwner(other);
+
+		let plr = HDPlayerPawn(other);
+		if (plr && BluesToGive > 0)
+		{
+			plr.A_GiveInventory('HealingMagic', BluesToGive);
+			BluesToGive = 0;
+		}
+
+		InitStorage();
+	}
+
+	private void InitStorage()
+	{
+		SpellStorage = ArcanumSpellBrain.Get(owner.PlayerNumber());
+	}
+
+	private clearscope ArcanumSpellTree GetSelectedTree()
+	{
+		return SpellStorage.Trees[WeaponStatus[ATProp_SelectedTree]];
+	}
+
+	private clearscope ArcanumSpell GetSelectedSpell()
+	{
+		return GetSelectedTree().Spells[WeaponStatus[ATProp_SelectedSpell]];
+	}
+
+	private action void A_NextTree()
+	{
+		int TreeCount = invoker.SpellStorage.Trees.Size();
+		invoker.WeaponStatus[ATProp_SelectedSpell] = 0;
+		if (++invoker.WeaponStatus[ATProp_SelectedTree] >= TreeCount)
+		{
+			invoker.WeaponStatus[ATProp_SelectedTree] = 0;
+		}
+	}
+
+	private action void A_PrevTree()
+	{
+		int TreeCount = invoker.SpellStorage.Trees.Size();
+		invoker.WeaponStatus[ATProp_SelectedSpell] = 0;
+		if (--invoker.WeaponStatus[ATProp_SelectedTree] < 0)
+		{
+			invoker.WeaponStatus[ATProp_SelectedTree] = TreeCount - 1;
+		}
+	}
+
+	private action void A_NextSpell()
+	{
+		int SpellCount = invoker.SpellStorage.SpellCountInTree(invoker.SpellStorage.Trees[invoker.WeaponStatus[ATProp_SelectedTree]].GetClass());
+		invoker.WeaponStatus[ATProp_SelectedSpell]++;
+		if (invoker.WeaponStatus[ATProp_SelectedSpell] >= SpellCount)
+		{
+			invoker.WeaponStatus[ATProp_SelectedSpell] = 0;
+		}
+	}
+
+	private action void A_PrevSpell()
+	{
+		int SpellCount = invoker.SpellStorage.SpellCountInTree(invoker.SpellStorage.Trees[invoker.WeaponStatus[ATProp_SelectedTree]].GetClass());
+		invoker.WeaponStatus[ATProp_SelectedSpell]--;
+		if (invoker.WeaponStatus[ATProp_SelectedSpell] < 0)
+		{
+			invoker.WeaponStatus[ATProp_SelectedSpell] = SpellCount - 1;
+		}
+	}
+
+	override void ActualPickup(Actor other, bool silent)
+	{
+		let tome = HDArcanumTome(other.FindInventory("HDArcanumTome"));
+		if (tome && tome.SpellStorage)
+		{
+			tome.WeaponStatus[ATProp_Mana] = min(tome.WeaponStatus[ATProp_Mana] + WeaponStatus[ATProp_Mana], HDHM_BALL);
+			
+			// [Ace] Only give experience to spells that fit the bill, i.e. those that actually support experience.
+			Array<ArcanumSpell> valid;
+			for (int i = 0; i < tome.SpellStorage.Trees.Size(); ++i)
+			{
+				for (int j = 0; j < tome.SpellStorage.Trees[i].Spells.Size(); ++j)
+				{
+					let cur = tome.SpellStorage.Trees[i].Spells[j];
+					if (cur.Experience < cur.GetMaxExperience())
+					{
+						valid.Push(cur);
+					}
+				}
+			}
+
+			if (valid.Size() > 0)
+			{
+				ArcanumSpell randSpell = valid[random(0, valid.Size() - 1)];
+				if (randSpell.GainExperience(randSpell.GetMaxExperience() / (multiplayer ? 4.0 : 5.0)))
+				{
+					other.A_Log("\c[Fire]"..randSpell.GetName().."\c- has reached full power.", true);
+				}
+				else
+				{
+					other.A_Log("Your knowledge of \c[Fire]"..randSpell.GetName().."\c- increases.", true);
+				}
+			}
+			else
+			{
+				other.A_Log("You fail to learn anything new.", true);
+			}
+			
+			other.A_StartSound("weapons/pocket");
+			Destroy();
+			return;
+		}
+		
+		Super.ActualPickup(other, silent);
+	}
+
+	private transient ui HUDFont TitleFont, DescFont, ExpFont;
+	private double AccumulatedBlues;
+	private int BluesToGive;
+	private AceCoreHandler CoreHandler;
+	ArcanumSpellBrain SpellStorage;
+	private transient CVar InvertSelection;
+	private transient CVar ZoomHold;
+	Actor SpiedActor;
+
+	Default
+	{
+		+HDWEAPON.FITSINBACKPACK
+		+INVENTORY.INVBAR
+		HDWeapon.BarrelSize 5, 2, 1; // [Ace] I don't even know why.
+		Scale 0.6;
+		Tag "Arcanum tome";
+		Inventory.PickupSound "weapons/pocket";
+		HDWeapon.Refid "arc";
+		Inventory.MaxAmount 1;
+		Inventory.PickupMessage "You picked up the Arcanum tome of knowledge. Unlimited power awaits those with the energy within.";
+	}
+
+	States
+	{
+		Spawn:
+			ARCT Z -1 NoDelay
+			{
+				if (invoker.ZoomHold) { invoker.ZoomHold = null; }
+				if (invoker.InvertSelection) { invoker.InvertSelection = null; }
+			}
+			Stop;
+		ReadyBook:
+			ARCB A 1;
+			Loop;
+		Ready:
+			ARCT A 1
+			{
+				if (!invoker.ZoomHold)
+				{
+					invoker.ZoomHold = CVar.GetCVar('arcanum_zoomhold', player);
+				}
+				if (invoker.ZoomHold.GetBool())
+				{
+					if (PressingZoom() && !(invoker.WeaponStatus[ATProp_Flags] & ATF_InSpellMenu))
+					{
+						invoker.WeaponStatus[ATProp_Flags] |= ATF_InSpellMenu;
+						A_SetHelpText();
+					}
+					if (!PressingZoom() && invoker.WeaponStatus[ATProp_Flags] & ATF_InSpellMenu)
+					{
+						invoker.WeaponStatus[ATProp_Flags] &= ~ATF_InSpellMenu;
+						A_SetHelpText();
+					}
+				}
+				else if (JustPressed(BT_ZOOM))
+				{
+					if (invoker.WeaponStatus[ATProp_Flags] & ATF_InSpellMenu)
+					{
+						invoker.WeaponStatus[ATProp_Flags] &= ~ATF_InSpellMenu;
+						A_SetHelpText();
+					}
+					else
+					{
+						invoker.WeaponStatus[ATProp_Flags] |= ATF_InSpellMenu;
+						A_SetHelpText();
+					}
+					SetWeaponState("Nope");
+					return;
+				}
+
+				if (invoker.WeaponStatus[ATProp_Flags] & ATF_InSpellMenu)
+				{
+					if (!invoker.InvertSelection)
+					{
+						invoker.InvertSelection = CVar.GetCVar('arcanum_invert', player);
+					}
+
+					int InvertFlags = invoker.InvertSelection.GetInt();
+					if (JustPressed(BT_ATTACK))
+					{
+						if (PressingFiremode())
+						{
+							if (InvertFlags & 1)
+							{
+								A_PrevTree();
+							}
+							else
+							{
+								A_NextTree();
+							}
+						}
+						else if (InvertFlags & 2)
+						{
+							A_PrevSpell();
+						}
+						else
+						{
+							A_NextSpell();
+						}
+					}
+					else if (JustPressed(BT_ALTATTACK))
+					{
+						if (PressingFiremode())
+						{
+							if (InvertFlags & 1)
+							{
+								A_NextTree();
+							}
+							else
+							{
+								A_PrevTree();
+							}
+						}
+						else if (InvertFlags & 2)
+						{
+							A_NextSpell();
+						}
+						else
+						{
+							A_PrevSpell();
+						}
+					}
+					A_WeaponReady(WRF_NOFIRE);
+					return;
+				}
+				A_WeaponReady(WRF_ALL);
+				
+				invoker.SpiedActor = AimTarget();
+				if (invoker.SpiedActor && !invoker.SpiedActor.bISMONSTER && !invoker.SpiedActor.player)
+				{
+					invoker.SpiedActor = null;
+				}
+			}
+			Goto ReadyEnd;
+		Select0:
+			ARCT A 0 A_Overlay(10, 'ReadyBook');
+			Goto Select0Small;
+		Deselect0:
+			ARCT A 0
+			{
+				invoker.WeaponStatus[ATProp_Flags] &= ~ATF_InSpellMenu;
+			}
+			Goto Deselect0Small;
+		DeadLowered:
+			ARTC A -1 A_ClearOverlays(10, 10);
+			Stop;
+		User3:
+			ARCT A 0 A_SelectWeapon("PickupManager");
+			Goto Ready;
+		Fire:
+			ARCT E 5
+			{
+				player.GetPSPrite(PSP_WEAPON).frame = random(1, 3);
+				FLineTraceData Data;
+				for (int i = 8; i <= 192; i += 8)
+				{
+					//Is this silly? Yes! Does it make casting way more reliable? Also Yes!
+					LineTrace(angle, i, pitch, TRF_NOSKY | TRF_ALLACTORS, player.viewheight + 8, 0, 0, Data);
+					LineTrace(angle, i, pitch, TRF_NOSKY | TRF_ALLACTORS, player.viewheight + 7, 0, 0, Data);
+					LineTrace(angle, i, pitch, TRF_NOSKY | TRF_ALLACTORS, player.viewheight + 6, 0, 0, Data);
+					LineTrace(angle, i, pitch, TRF_NOSKY | TRF_ALLACTORS, player.viewheight + 5, 0, 0, Data);
+					LineTrace(angle, i, pitch, TRF_NOSKY | TRF_ALLACTORS, player.viewheight + 4, 0, 0, Data);
+					LineTrace(angle, i, pitch, TRF_NOSKY | TRF_ALLACTORS, player.viewheight + 3, 0, 0, Data);
+					LineTrace(angle, i, pitch, TRF_NOSKY | TRF_ALLACTORS, player.viewheight + 2, 0, 0, Data);
+					LineTrace(angle, i, pitch, TRF_NOSKY | TRF_ALLACTORS, player.viewheight + 1, 0, 0, Data);
+					LineTrace(angle, i, pitch, TRF_NOSKY | TRF_ALLACTORS, player.viewheight - 0, 0, 0, Data);
+					LineTrace(angle, i, pitch, TRF_NOSKY | TRF_ALLACTORS, player.viewheight - 1, 0, 0, Data);
+					LineTrace(angle, i, pitch, TRF_NOSKY | TRF_ALLACTORS, player.viewheight - 2, 0, 0, Data);
+					LineTrace(angle, i, pitch, TRF_NOSKY | TRF_ALLACTORS, player.viewheight - 3, 0, 0, Data);
+					LineTrace(angle, i, pitch, TRF_NOSKY | TRF_ALLACTORS, player.viewheight - 4, 0, 0, Data);
+					LineTrace(angle, i, pitch, TRF_NOSKY | TRF_ALLACTORS, player.viewheight - 5, 0, 0, Data);
+					LineTrace(angle, i, pitch, TRF_NOSKY | TRF_ALLACTORS, player.viewheight - 6, 0, 0, Data);
+					LineTrace(angle, i, pitch, TRF_NOSKY | TRF_ALLACTORS, player.viewheight - 7, 0, 0, Data);
+					LineTrace(angle, i, pitch, TRF_NOSKY | TRF_ALLACTORS, player.viewheight - 8, 0, 0, Data);
+					if (Data.HitType == Data.TRACE_HitActor && Data.HitActor is 'ArcanumRuneSlot')
+					{
+						let runeSlot = ArcanumRuneSlot(Data.HitActor);
+						let sigil = ArcanumSigil(runeSlot.master);
+
+						if (sigil && sigil.master == self)
+						{
+							runeSlot.ActivateRune(self);
+						}
+						break;
+					}
+				}
+			}
+			ARCT A 2;
+			Goto Nope;
+		AltFire:
+			ARCT A 1;
+			ARCT A 0
+			{
+				ArcanumSpell SelSpell = invoker.GetSelectedSpell();
+				int st = SelSpell.GetSpellType();
+
+				double mPitch = min(ArcanumSigil.SelfCastMaxPitch, player.MaxPitch - (90 - ArcanumSigil.SelfCastMaxPitch));
+				if (st & ArcanumSpell.SType_SelfOrMass && !(st & ArcanumSpell.SType_Targeted) && pitch < mPitch)
+				{
+					A_SetPitch(pitch + 10, SPF_INTERPOLATE);
+					A_Refire('AltFire');
+					return;
+				}
+
+				if (st & ArcanumSpell.SType_SelfOrMass && pitch >= mPitch || st & ArcanumSpell.SType_Targeted)
+				{
+					SetWeaponState('ActuallyAltFire');
+					return;
+				}
+			}
+			Goto Nope;
+		ActuallyAltFire:
+			ARCT E 5
+			{
+				ArcanumSpell selSpell = invoker.GetSelectedSpell();
+
+				let plr = HDPlayerPawn(self);
+
+				double mult = AceCore.CheckForItem(plr, "HDSoulCube") ? 0.80 : 1.0;
+				int cost = int(selSpell.GetManaCost() * mult);
+				if (invoker.WeaponStatus[ATProp_Mana] >= cost)
+				{
+					FLineTraceData Data;
+					LineTrace(angle, radius + 10, pitch, TRF_NOSKY, height - 6, 0, 0, Data);
+					if (Data.HitType == Data.TRACE_HitNone || Data.HitType == Data.TRACE_HitFloor)
+					{
+						invoker.WeaponStatus[ATProp_Mana] -= cost;
+
+						ArcanumSigil s = ArcanumSigil(Spawn(selSpell.GetSigil(), Data.HitLocation));
+						s.angle = angle;
+						if (!s.bDONTPITCH)
+						{
+							s.pitch = pitch;
+						}
+						s.master = self;
+						s.ExperienceFactor = selSpell.GetExperienceFactor();
+						s.Spell = selSpell;
+
+						double mPitch = min(ArcanumSigil.SelfCastMaxPitch, player.MaxPitch - (90 - ArcanumSigil.SelfCastMaxPitch));
+						int st = selSpell.GetSpellType();
+						if (st & ArcanumSpell.SType_SelfOrMass && pitch >= mPitch)
+						{
+							s.SigilType = ArcanumSpell.SType_SelfOrMass;
+						}
+						else
+						{
+							s.SigilType = ArcanumSpell.SType_Targeted;
+						}
+					}
+				}
+				else
+				{
+					A_WeaponMessage("You don't feel powerful enough to cast "..selSpell.GetName()..".");
+				}
+			}
+			ARCT A 2;
+			Goto Nope;
+	}
+}

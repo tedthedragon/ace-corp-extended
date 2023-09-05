@@ -1,0 +1,126 @@
+class LifeForceSpell : ArcanumSpell
+{
+	override int GetIndex() { return 10; }
+	override class<ArcanumSpellTree> GetTree() { return 'ArcanumTreeRestoration'; }
+	override string GetName() { return "Life Force"; }
+	override int GetSpellType() { return SType_SelfOrMass | SType_Targeted; }
+	override int GetManaCost() { return 25; }
+	override string GetDescription()
+	{
+		double fac = GetExperienceFactor();
+		return String.Format("Fixes all wounds and restores \c[Gold]%i\c-%% of missing health. Heals \c[Gold]%i\c- burns. Reduces aggro by \c[Gold]%i\c-. Restores lost blood and removes incap.", int(25 + 75 * fac), int(25 + 50 * fac), int(10 + 20 * fac));
+	}
+	override string GetTechnicalInfo() { return "Self, Targeted, Touch"; }
+	override int GetMaxExperience() { return 100; }
+	override class<ArcanumSigil> GetSigil() { return 'LifeForceSigil'; }
+}
+
+class LifeForceSigil : ArcanumSigil
+{
+	override void ActivateTargeted()
+	{
+		Actor a = AimTarget();
+		if (a && a.Health > 0 && (a.bISMONSTER || a.player) && Distance3D(a) <= HDCONST_ONEMETRE * 2)
+		{
+			DoHealing(a);
+		}
+	}
+
+	override void ActivateSelfOrMass()
+	{
+		if (master)
+		{
+			DoHealing(master);
+		}
+	}
+
+	private void DoHealing(Actor a)
+	{
+		let plr = HDPlayerPawn(a);
+		
+		let revit = a.FindInventory('RevitalizationEffect');
+		if (revit)
+		{
+			ExperienceFactor *= 2.0;
+			revit.Destroy();
+		}
+
+		double healthFixFac = 0.25 + 0.75 * ExperienceFactor;
+		int burnFix = int(25 + 50 * ExperienceFactor);
+		int aggroFix = int(10 + 20 * ExperienceFactor);
+
+		if (plr)
+		{
+			PlayCastSound(self, "Arcanum/Restoration/LifeForce");
+			
+			//plr.unstablewoundcount = 0;
+			plr.oldwoundcount = 0;
+			//plr.woundcount = 0;
+			plr.burncount -= burnFix;
+			plr.aggravateddamage -= aggroFix;
+			plr.bloodloss = 0;
+			plr.incaptimer = 0;
+
+			int missingHealth = plr.default.Health - plr.Health;
+			plr.GiveBody(int(missingHealth * healthFixFac));
+
+			Name diseaseClsName = 'DiseaseBase';
+			if ((class<Inventory>)(diseaseClsName))
+			{
+				for (Inventory next = plr.Inv; next != null; next = next.Inv)
+				{
+					if (next is diseaseClsName)
+					{
+						next.Amount -= int(15 + 35 * ExperienceFactor);
+					}
+				}
+			}
+		}
+		else if (a)
+		{
+			PlayCastSound(self, "Arcanum/Restoration/LifeForce");
+			int missingHealth = a.SpawnHealth() - a.Health;
+			a.GiveBody(int(missingHealth * healthFixFac));
+
+			let mon = HDMobBase(a);
+			if (mon)
+			{
+				mon.stunned = 0;
+				mon.bodydamage = 0; // [Ace] Eh, why not?
+				mon.bloodloss = 0;
+			}
+
+			// [Ace] Stop bleeding.
+			ThinkerIterator it = ThinkerIterator.Create("HDBleedingWound", STAT_DEFAULT);
+			HDBleedingWound BleedThinker;
+			while ((BleedThinker = HDBleedingWound(it.Next())))
+			{
+				if (BleedThinker.bleeder == mon)
+				{
+					BleedThinker.Destroy();
+				}
+			}
+		}
+	}
+
+	override void InitRuneSlots()
+	{
+		vector2 BigSize = (4, 6.66);
+		vector2 SmallSize = (3, 5);
+		CreateRuneSlot((-9.3, 16.5), SmallSize, 0.9); CreateRuneSlot((9.3, 16.5), SmallSize, 0.9);
+		CreateRuneSlot((-17, 0), BigSize, 1.2); CreateRuneSlot((17, 0), BigSize, 1.2);
+		CreateRuneSlot((-9.3, -16.5), SmallSize, 0.9); CreateRuneSlot((9.3, -16.5), SmallSize, 0.9);
+	}
+
+	Default
+	{
+		StencilColor "FF0A0A";
+	}
+
+	States
+	{
+		Spawn:
+			CRRE B 0;
+			Goto Super::Spawn;
+	}
+}

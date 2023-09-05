@@ -1,0 +1,15 @@
+FlickerLight VoidstormAntiGlow
+{
+	Color 1.0 0.8 0.9
+	Size 256
+	Chance 0.5
+	SecondarySize 240
+	Subtractive 1
+	DontLightSelf 1
+}
+
+Object VoidstormOrb
+{
+	Frame VSTR { Light VoidstormAntiGlow }
+	Frame TNT1 { Light VoidstormAntiGlow }
+}

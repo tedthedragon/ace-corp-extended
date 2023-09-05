@@ -1,0 +1,240 @@
+class ManaBarrelHole : Thinker
+{
+	ManaBarrel Barrel;
+	double Height;
+	double Angle;
+	private int DepleteTicker;
+
+	override void Tick()
+	{
+		if (!Barrel || Barrel.ManaLeft == 0)
+		{
+			Destroy();
+			return;
+		}
+
+		double manaFac = Barrel.ManaLeft / double(Barrel.TotalMana);
+		double holeHeightFac = Height / Barrel.Height;
+		if (manaFac < holeHeightFac)
+		{
+			Destroy();
+			return;
+		}
+
+		double pressure = (1.0 - holeHeightFac) * manaFac;
+		if (random(0, 3))
+		{
+			Barrel.A_SpawnParticle(0x0520FF, (SPF_RELATIVE & ~SPF_RELANG) | SPF_FULLBRIGHT, 35, 3, Angle + frandom(-1.0, 1.0), Barrel.radius / 2, 0, Height, 6 * pressure * frandom(0.95, 1.05), accelz: -1);
+		}
+
+		if (++DepleteTicker % 70 == 0)
+		{
+			Barrel.ManaLeft = max(0, Barrel.ManaLeft - 1);
+		}
+
+		Super.Tick();
+	}
+}
+
+class ManaBarrel : Actor
+{
+	override void BeginPlay()
+	{
+		ManaLeft = TotalMana;
+		
+		let light = ManaBarrelLight(Spawn('ManaBarrelLight', pos));
+		light.Barrel = self;
+
+		Super.BeginPlay();
+	}
+
+	override bool Used(Actor user)
+	{	
+		if (Distance3D(user) > radius + user.radius * 2)
+		{
+			return false;
+		}
+
+		if (ManaLeft == 0)
+		{
+			user.A_Log("This barrel is empty.", true);
+			return false;
+		}
+		//if (!(user.player.ReadyWeapon is 'HDHealingBottler' ||self.countinv('HDHealingPotion') >> 0))
+		let potion = HDMagAmmo(user.FindInventory('HDHealingPotion'));
+		int lowestIndex = AceCore.GetLowestMag(potion, 0);
+		if (!(user.player.ReadyWeapon is 'HDHealingBottler' ||self.countinv('HDHealingPotion') >= 1 || potion.Mags[lowestIndex] < HDHM_BOTTLE))
+		{
+			double maxSipFac = HDPlayerPawn(user) && HDPlayerPawn(user).incapacitated > 0 ? 0.9 : 0.8;
+			if (ManaLeft >= TotalMana * maxSipFac)
+			{
+				user.A_GiveInventory('HealingMagic', HDHM_MOUTH);
+				user.A_Log("You take a sip.", true);
+				user.A_StartSound("potion/chug", 15);
+				ManaLeft--;
+			}
+			else
+			{
+				user.A_Log("You can't reach anything.", true);
+			}
+			return false;
+		}
+
+		//let potion = HDMagAmmo(user.FindInventory('HDHealingPotion'));
+		if (!potion)
+		{
+			return false;
+		}
+
+		//int lowestIndex = AceCore.GetLowestMag(potion, 0);
+		//if (lowestIndex > -1)
+		if (lowestIndex > -1)
+		{
+			if (potion.Mags[lowestIndex] < HDHM_BOTTLE)
+			{
+				int toFill = min(ManaLeft, HDHM_BOTTLE - potion.Mags[lowestIndex]);
+				
+				potion.Mags[lowestIndex] += toFill;
+				ManaLeft -= toFill;
+
+				double potsLeft = ManaLeft / double(HDHM_BOTTLE);
+				string extra = potsLeft > 0 ? String.Format(" There is still enough mana to fill \c[LightBlue]%.1f\c- bottles.", potsLeft) : " That was the last of the mana.";
+				user.A_Log("You filled a potion."..extra, true);
+				user.A_StartSound("potion/swish", 15);
+			}
+		}
+
+		return false;
+	}
+
+	override int DamageMobj(Actor inflictor, Actor source, int damage, Name mod, int flags, double angle)
+	{
+		int dmg = Super.DamageMobj(inflictor, source, damage / 4, mod, flags, angle);
+		if (dmg < Health && (mod == 'Bashing' && !random(0, 3) || mod == 'Piercing'))
+		{
+			if (inflictor)
+			{
+				let hole = new('ManaBarrelHole');
+				hole.Barrel = self;
+				hole.Height = inflictor.pos.z - pos.z;
+				hole.Angle = AngleTo(inflictor);
+			}
+			else
+			{
+				int holes = dmg / 6;
+				for (int i = 0; i < holes; ++i)
+				{
+					let hole = new('ManaBarrelHole');
+					hole.Barrel = self;
+					hole.Height = min(frandom(0, Height * 2), Height);
+					hole.Angle = frandom(0, 359);
+				}
+			}
+		}
+
+		return dmg;
+	}
+
+	override void Tick()
+	{
+		if (!Broken)
+		{
+			double manaFac = ManaLeft / double(TotalMana);
+			if (manaFac > 0)
+			{
+				for (int i = 0; i < 2; ++i)
+				{
+					A_SpawnParticle(0x0520FF, SPF_RELATIVE | SPF_FULLBRIGHT, int(5 + 10 * manaFac), 2, frandom(0, 359), frandom(0, radius / 1.5), 0, height, 0, 0, frandom(2.0, 3.0) * manaFac, accelz: -0.25);
+				}
+			}
+		}
+
+		Super.Tick();
+	}
+
+	const TotalMana = HDHM_BOTTLE * 5;
+	uint ManaLeft;
+	private int DepleteTicker;
+	private bool Broken;
+
+	Default
+	{
+		Radius 10;
+		Height 32;
+		Health 100;
+		Mass 200;
+		+SOLID
+		+SHOOTABLE
+		+NOBLOOD
+		+GHOST
+	}
+
+	States
+	{
+		Spawn:
+			MNBR AB 10 A_JumpIf(ManaLeft < TotalMana * 0.9, 'ManaNotVisible');
+			Loop;
+		ManaNotVisible:
+			MNBR C 1 A_JumpIf(ManaLeft == 0, 'Empty');
+			Loop;
+		Empty:
+			MNBR C -1;
+			Stop;
+		Death:
+			MNBR D 1
+			{
+				for (int i = 0; i < 16; ++i)
+				{
+					Actor a = Spawn("HugeWallChunk", (pos.xy, pos.z + frandom(0, height)));
+					a.vel = (frandom(-4, 4), frandom(-4, 4), frandom(2, 10));
+					a.A_SetTranslation('ManaShrapnel');
+					a.scale *= frandom(0.8, 1.8);
+				}
+				ManaLeft = int(min(TotalMana * 0.1, ManaLeft));
+				Broken = true;
+			}
+		DeathLeaking:
+			MNBR DE 10
+			{
+				if (ManaLeft == 0)
+				{
+					SetStateLabel('DeathIdle');
+					return;
+				}
+				if (++DepleteTicker % 3 == 0)
+				{
+					ManaLeft--;
+				}
+			}
+			Loop;
+		DeathIdle:
+			MNBR F -1;
+			Stop;
+	}
+}
+
+class ManaBarrelLight : PointLight
+{
+	override void BeginPlay()
+	{
+		Super.BeginPlay();
+		Args[0] = 5;
+		Args[1] = 10;
+		Args[2] = 100;
+		Args[3] = 30;
+	}
+
+	override void Tick()
+	{
+		if (!Barrel || Barrel.ManaLeft == 0)
+		{
+			Destroy();
+			return;
+		}
+
+		SetOrigin((Barrel.pos.xy, Barrel.pos.z + 36), true);
+		Args[3] = random[manbarlightrand](28, 32);
+	}
+
+	ManaBarrel Barrel;
+}

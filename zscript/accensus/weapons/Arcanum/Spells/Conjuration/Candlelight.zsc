@@ -1,0 +1,95 @@
+class CandlelightSpell : ArcanumSpell
+{
+	override int GetIndex() { return 40; }
+	override class<ArcanumSpellTree> GetTree() { return 'ArcanumTreeConjuration'; }
+	override string GetName() { return "Candlelight"; }
+	override int GetSpellType() { return SType_SelfOrMass; }
+	override int GetManaCost() { return 5; }
+	override string GetDescription() { return String.Format("Emit a bright light with a radius of \c[Gold]%.1f\c-m for \c[Gold]%.1f\c- minutes.", 5 + 5 * GetExperienceFactor(), 5 + 5 * GetExperienceFactor()); }
+	override string GetTechnicalInfo() { return "Self"; }
+	override int GetMaxExperience() { return 100; }
+	override class<ArcanumSigil> GetSigil() { return 'CandlelightSigil'; }
+}
+
+class CandlelightSigil : ArcanumSigil
+{
+	override void ActivateSelfOrMass()
+	{
+		PlayCastSound(master, "Arcanum/Conjuration/Candlelight");
+		Actor l = Spawn('CandlelightLight', master.pos + (0, 0, master.height / 2));
+		l.master = master;
+		int size = int(HDCONST_ONEMETRE * (5 + 5 * ExperienceFactor));
+		l.mass = size;
+		l.ReactionTime = l.stamina = int(35 * 60 * (5 + 5 * ExperienceFactor));
+	}
+
+	override void InitRuneSlots()
+	{
+		vector2 Size = (2, 3.333);
+		double RSize = 0.5;
+		CreateRuneSlot((0, 10), Size, RSize);
+		CreateRuneSlot((0, -10), Size, RSize);
+		CreateRuneSlot((-7, -7), Size, RSize);
+		CreateRuneSlot((7, -7), Size, RSize);
+	}
+
+
+	Default
+	{
+		StencilColor "EEEE55";
+	}
+
+	States
+	{
+		Spawn:
+			CRCN E 0;
+			Goto Super::Spawn;
+	}
+}
+
+class CandlelightLight : PointLightFlickerRandom
+{
+	override void Tick()
+	{
+		ReactionTime--;
+
+		if (stamina <= 0)
+		{
+			Destroy();
+			return;
+		}
+
+		if (ReactionTime > 0)
+		{
+			double lifeFac = max(0.4, ReactionTime / double(stamina));
+			int size = int(mass * lifeFac);
+			Args[3] = size;
+			Args[4] = size + 16;
+		}
+		else
+		{
+			Args[3]--;
+			Args[4]--;
+			if (Args[3] <= 0)
+			{
+				Destroy();
+				return;
+			}
+		}
+
+		if (!master)
+		{
+			Destroy();
+			return;
+		}
+
+		Warp(master, 0, 0, master.height / 2, flags: WARPF_NOCHECKPOSITION);
+
+		Super.Tick();
+	}
+
+	Default
+	{
+		Args 255, 255, 255;
+	}
+}

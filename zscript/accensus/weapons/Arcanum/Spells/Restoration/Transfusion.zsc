@@ -1,0 +1,52 @@
+class TransfusionSpell : ArcanumSpell
+{
+	override int GetIndex() { return 20; }
+	override class<ArcanumSpellTree> GetTree() { return 'ArcanumTreeRestoration'; }
+	override string GetName() { return "Transfusion"; }
+	override int GetSpellType() { return SType_Targeted; }
+	override int GetManaCost() { return 10; }
+	override string GetDescription() { return String.Format("Transfers all of the tome's stored blues to the target."); }
+	override string GetTechnicalInfo() { return "Targeted, Touch"; }
+	override int GetMaxExperience() { return 0; }
+	override class<ArcanumSigil> GetSigil() { return 'TransfusionSigil'; }
+}
+
+class TransfusionSigil : ArcanumSigil
+{
+	override void ActivateTargeted()
+	{
+		let plr = HDPlayerPawn(AimTarget());
+		let you = HDPlayerPawn(master);
+		if (plr && you) // [Ace] <3
+		{
+			let tome = HDArcanumTome(you.FindInventory('HDArcanumTome'));
+			if (tome.WeaponStatus[tome.ATProp_Mana] > 0)
+			{
+				PlayCastSound(self, "Arcanum/Restoration/Transfusion");
+				plr.A_GiveInventory('HealingMagic', tome.WeaponStatus[tome.ATProp_Mana]);
+				tome.WeaponStatus[tome.ATProp_Mana] = 0;
+			}
+		}
+	}
+
+	override void InitRuneSlots()
+	{
+		vector2 Size = (4, 6.66);
+		CreateRuneSlot((-13.25, 13.25), Size, 1.25);
+		CreateRuneSlot((13.25, 13.25), Size, 1.25);
+		CreateRuneSlot((-13.25, -13.25), Size, 1.25);
+		CreateRuneSlot((13.25, -13.25), Size, 1.25);
+	}
+
+	Default
+	{
+		StencilColor "3333FF";
+	}
+
+	States
+	{
+		Spawn:
+			CRRE C 0;
+			Goto Super::Spawn;
+	}
+}

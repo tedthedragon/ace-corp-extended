@@ -1,0 +1,175 @@
+class BridgeSpell : ArcanumSpell
+{
+	override int GetIndex() { return 30; }
+	override class<ArcanumSpellTree> GetTree() { return 'ArcanumTreeConjuration'; }
+	override string GetName() { return "Bridge"; }
+	override int GetSpellType() { return SType_SelfOrMass; }
+	override int GetManaCost() { return 35; }
+	override string GetDescription() { return "Creates a 20m-long energy bridge. Lasts 30 seconds."; }
+	override string GetTechnicalInfo() { return "Angled"; }
+	override int GetMaxExperience() { return 0; }
+	override class<ArcanumSigil> GetSigil() { return 'BridgeSigil'; }
+}
+
+class BridgeSigil : ArcanumSigil
+{
+	override void ActivateSelfOrMass()
+	{
+		Actor a = Spawn("ArcanumBridgeManager", (pos.x, pos.y, master.pos.z));
+		a.Angle = Angle;
+		PlayCastSound(self, "Arcanum/Conjuration/Bridge");
+	}
+
+	override void InitRuneSlots()
+	{
+		vector2 Size = (2, 3.333);
+		double X = 0, Y = 18.2;
+		double RSize = 0.6;
+		CreateRuneSlot((0, Y), Size, RSize);
+		CreateRuneSlot((0, -Y), Size, RSize);
+
+		X = 3.9; Y = 11.4;
+		CreateRuneSlot((-X, Y), Size, RSize);
+		CreateRuneSlot((X, Y), Size, RSize);
+		CreateRuneSlot((X, -Y), Size, RSize);
+		CreateRuneSlot((-X, -Y), Size, RSize);
+	}
+
+
+	Default
+	{
+		StencilColor "70C3F0";
+	}
+
+	States
+	{
+		Spawn:
+			CRCN D 0;
+			Goto Super::Spawn;
+	}
+}
+
+class ArcanumBridgeManager : ArcanumBarrierManager
+{
+	override void PostBeginPlay()
+	{
+		Actor.PostBeginPlay();
+	}
+	Default
+	{
+		Height 1;
+		ReactionTime 35 * 30;
+	}
+
+	const Segments = 37;
+
+	States
+	{
+		Spawn:
+			TNT1 A 2 NoDelay
+			{
+				if (SpawnIndex == Segments)
+				{
+					SetStateLabel('Idle');
+					return;
+				}
+
+				Actor a; bool success;
+				if (SpawnIndex % 2 == 1)
+				{
+					[success, a] = A_SpawnItemEx("ArcanumBridge", (23 * SpawnIndex), -39.75, flags: SXF_NOCHECKPOSITION); Blockers.Push(a);
+					[success, a] = A_SpawnItemEx("ArcanumBridge", (23 * SpawnIndex), -13.25, flags: SXF_NOCHECKPOSITION); Blockers.Push(a);
+					[success, a] = A_SpawnItemEx("ArcanumBridge", (23 * SpawnIndex), 13.25, flags: SXF_NOCHECKPOSITION); Blockers.Push(a);
+					[success, a] = A_SpawnItemEx("ArcanumBridge", (23 * SpawnIndex), 39.75, flags: SXF_NOCHECKPOSITION); Blockers.Push(a);
+				}
+				else
+				{
+					[success, a] = A_SpawnItemEx("ArcanumBridge", (23 * SpawnIndex), -53, flags: SXF_NOCHECKPOSITION); Blockers.Push(a);
+					[success, a] = A_SpawnItemEx("ArcanumBridge", (23 * SpawnIndex), -26.5, flags: SXF_NOCHECKPOSITION); Blockers.Push(a);
+					[success, a] = A_SpawnItemEx("ArcanumBridge", (23 * SpawnIndex), flags: SXF_NOCHECKPOSITION); Blockers.Push(a);
+					[success, a] = A_SpawnItemEx("ArcanumBridge", (23 * SpawnIndex), 26.5, flags: SXF_NOCHECKPOSITION); Blockers.Push(a);
+					[success, a] = A_SpawnItemEx("ArcanumBridge", (23 * SpawnIndex), 53, flags: SXF_NOCHECKPOSITION); Blockers.Push(a);
+				}
+				SpawnIndex++;
+			}
+			Loop;
+		Idle:
+			TNT1 A 1
+			{
+				if (--ReactionTime <= 0)
+				{
+					A_SetTics(2);
+					int VSize = Blockers.Size();
+					int BarriersToDelete = (Segments - SpawnIndex) % 2 == 1 ? 4 : 5;
+					if (VSize >= BarriersToDelete)
+					{
+						for (int i = 0; i < BarriersToDelete; ++i)
+						{
+							Blockers[i].SetStateLabel('Death');
+						}
+						Blockers.Delete(0, BarriersToDelete);
+						SpawnIndex--;
+					}
+					else
+					{
+						Destroy();
+						return;
+					}
+				}
+			}
+			Loop;
+	}
+}
+
+class ArcanumBridge : ArcanumBarrier
+{
+	override void PostBeginPlay()
+	{
+		A_GiveInventory('ImmunityToFire');
+		Actor.PostBeginPlay();
+	}
+
+	Default
+	{
+		Radius 18;
+		Height 3;
+		-WALLSPRITE
+		+FLATSPRITE
+		+ACTLIKEBRIDGE
+	}
+
+	States
+	{
+		Spawn:
+			ARBR B 1
+			{
+				if (Scale.x < 0.2)
+				{
+					Scale += (0.04, 0.04);
+				}
+				else
+				{
+					SetStateLabel('SpawnLoop');
+				}
+			}
+			Loop;
+		SpawnLoop:
+			ARBR B 1
+			{
+				A_SetTics(random(1, 4));
+				Alpha = frandom(0.85, 1.00);
+			}
+			Loop;
+		Death:
+			ARBR B 1
+			{
+				Scale *= 0.7;
+				if (Scale.x < 0.02)
+				{
+					Destroy();
+					return;
+				}
+			}
+			Loop;
+	}
+}

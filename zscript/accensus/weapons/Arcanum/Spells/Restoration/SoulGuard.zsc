@@ -1,0 +1,64 @@
+class SoulGuardSpell : ArcanumSpell
+{
+	override int GetIndex() { return 40; }
+	override class<ArcanumSpellTree> GetTree() { return 'ArcanumTreeRestoration'; }
+	override string GetName() { return "Shield Guard"; }
+	override int GetSpellType() { return SType_SelfOrMass | SType_Targeted; }
+	override int GetManaCost() { return 75; }
+	override string GetDescription()
+	{
+		int layers = int(1 + 2 * GetExperienceFactor());
+		return String.Format("Creates a shieldcore.", layers, layers > 1 ? "s" : "");
+	}
+	override string GetTechnicalInfo() { return "Self, Targeted"; }
+	override int GetMaxExperience() { return 40; }
+	override class<ArcanumSigil> GetSigil() { return 'SoulGuardSigil'; }
+}
+
+class SoulGuardSigil : ArcanumSigil
+{
+	override void ActivateTargeted()
+	{
+		let plr = HDPlayerPawn(AimTarget());
+		if (plr && plr.Health > 0)
+		{
+			GiveSpiritualArmor(plr);
+		}
+	}
+
+	override void ActivateSelfOrMass()
+	{
+		let plr = HDPlayerPawn(master);
+		if (plr)
+		{
+			GiveSpiritualArmor(plr);
+		}
+	}
+
+	private void GiveSpiritualArmor(HDPlayerPawn plr)
+	{
+		PlayCastSound(self, "Arcanum/Restoration/SoulGuard");
+		plr.A_GiveInventory("ShieldCore", int(1 + 2 * ExperienceFactor));
+	}
+
+	override void InitRuneSlots()
+	{
+		vector2 Size = (5, 8.33);
+		CreateRuneSlot((-19.65, 0), Size, 1.25);
+		CreateRuneSlot((0, 19.65), Size, 1.25);
+		CreateRuneSlot((19.65, 0), Size, 1.25);
+		CreateRuneSlot((0, -19.65), Size, 1.25);
+	}
+
+	Default
+	{
+		StencilColor "44FF44";
+	}
+
+	States
+	{
+		Spawn:
+			CRRE E 0;
+			Goto Super::Spawn;
+	}
+}
