@@ -80,7 +80,7 @@ class ArcanumSigil : HDActor abstract
 				HasTriggered = true;
 				if (Spell.GainExperience(multiplayer ? 1.25 : 1.0))
 				{
-					master.A_Log("\c[Fire]"..Spell.GetName().."\c- has reached full power.", true);
+					master.A_Log(Stringtable.Localize("$ARC_FIRECOLOR")..Spell.GetName()..Stringtable.Localize("$ARC_MAXIMUMPOWER"), true);
 				}
 			}
 			switch (SigilType)

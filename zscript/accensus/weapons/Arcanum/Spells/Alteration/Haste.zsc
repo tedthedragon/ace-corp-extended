@@ -2,11 +2,11 @@ class HasteSpell : ArcanumSpell
 {
 	override int GetIndex() { return 30; }
 	override class<ArcanumSpellTree> GetTree() { return 'ArcanumTreeAlteration'; }
-	override string GetName() { return "Haste"; }
+	override string GetName() { return Stringtable.Localize("$ARC_SPELL_HASTE"); }
 	override int GetSpellType() { return SType_SelfOrMass; }
 	override int GetManaCost() { return 100; }
-	override string GetDescription() { return String.Format("All visible players within 20m get an increase to speed by \c[Gold]%i\c-%%. Effect expires after \c[Gold]%.1f\c- km.", 75 + int(50 * GetExperienceFactor()), (2500 + 7500 * GetExperienceFactor()) / 1000.0); }
-	override string GetTechnicalInfo() { return "Mass"; }
+	override string GetDescription() { return String.Format(Stringtable.Localize("$ARC_SPELL_HASTE_DESCRIPTION"), 75 + int(50 * GetExperienceFactor()), (2500 + 7500 * GetExperienceFactor()) / 1000.0); }
+	override string GetTechnicalInfo() { return Stringtable.Localize("$ARC_SPELL_HASTE_TYPE"); }
 	override int GetMaxExperience() { return 100; }
 	override class<ArcanumSigil> GetSigil() { return 'HasteSigil'; }
 	override void DrawHudStuff(HDStatusBar sb, HDPlayerPawn hpl, HDArcanumTome tome)

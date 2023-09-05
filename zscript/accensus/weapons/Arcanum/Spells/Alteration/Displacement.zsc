@@ -2,11 +2,11 @@ class DisplacementSpell : ArcanumSpell
 {
 	override int GetIndex() { return 70; }
 	override class<ArcanumSpellTree> GetTree() { return 'ArcanumTreeAlteration'; }
-	override string GetName() { return "Displacement"; }
+	override string GetName() { return Stringtable.Localize("$ARC_SPELL_DISPLACEMENT"); }
 	override int GetSpellType() { return SType_SelfOrMass; }
 	override int GetManaCost() { return 30; }
-	override string GetDescription() { return "Partly severs your link to this world and gives you the ability to fly for 4 seconds, then teleports you to where you cast the spell. Enemies cannot see you while being displaced."; }
-	override string GetTechnicalInfo() { return "Self"; }
+	override string GetDescription() { return Stringtable.Localize("$ARC_SPELL_DISPLACEMENT_DESCRIPTION"); }
+	override string GetTechnicalInfo() { return Stringtable.Localize("$ARC_SPELL_DISPLACEMENT_TYPE"); }
 	override int GetMaxExperience() { return 0; }
 	override class<ArcanumSigil> GetSigil() { return 'DisplacementSigil'; }
 }

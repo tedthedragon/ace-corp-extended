@@ -2,11 +2,11 @@ class ReenergizeSpell : ArcanumSpell
 {
 	override int GetIndex() { return 60; }
 	override class<ArcanumSpellTree> GetTree() { return 'ArcanumTreeAlteration'; }
-	override string GetName() { return "Reenergize"; }
+	override string GetName() { return Stringtable.Localize("$ARC_SPELL_REENERGIZE"); }
 	override int GetSpellType() { return SType_SelfOrMass | SType_Targeted; }
 	override int GetManaCost() { return 30; }
-	override string GetDescription() { return String.Format("Restores up to \c[Gold]%i\c- battery charge, filling partial batteries first.", int(20 + 80 * GetExperienceFactor())); }
-	override string GetTechnicalInfo() { return "Self, Targeted, Touch"; }
+	override string GetDescription() { return String.Format(Stringtable.Localize("$ARC_SPELL_REENERGIZE_DESCRIPTION"), int(20 + 80 * GetExperienceFactor())); }
+	override string GetTechnicalInfo() { return Stringtable.Localize("$ARC_SPELL_REENERGIZE_TYPE"); }
 	override int GetMaxExperience() { return 200; }
 	override class<ArcanumSigil> GetSigil() { return 'ReenergizeSigil'; }
 }

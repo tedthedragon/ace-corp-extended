@@ -48,26 +48,26 @@ class ArcanumSpellTree abstract play
 
 class ArcanumTreeDestruction : ArcanumSpellTree
 {
-	override string GetName() { return "\c[Red]Destruction\c-"; }
-	override string GetDescription() { return "Those who wish to destroy the world may find out how trivial it is. But is it really what you want?\n\nThis tree contains spells to call down thunder, annihilate entire hordes, or light a candle."; }
+	override string GetName() { return Stringtable.Localize("$ARC_DESTRUCTION_TITLE"); }
+	override string GetDescription() { return Stringtable.Localize("$ARC_DESTRUCTION_DESCRIPTION"); }
 }
 
 class ArcanumTreeRestoration : ArcanumSpellTree
 {
-	override string GetName() { return "\c[Tan]Restoration\c-"; }
-	override string GetDescription() { return "It is a wise man's goal to heal the world.\n\nRestoration spells give you the ability to resurrect friends or foes, heal their wounds, cleanse their body, and protect it."; }
+	override string GetName() { return Stringtable.Localize("$ARC_RESTORATION_TITLE"); }
+	override string GetDescription() { return Stringtable.Localize("$ARC_RESTORATION_DESCRIPTION"); }
 }
 
 class ArcanumTreeAlteration : ArcanumSpellTree
 {
-	override string GetName() { return "\c[Green]Alteration\c-"; }
-	override string GetDescription() { return "Nothing is as it appears. Manipulate the world to your liking.\n\nThe school of Alteration lets you destroy entire walls or otherwise manipulate objects."; }
+	override string GetName() { return Stringtable.Localize("$ARC_ALTERATION_TITLE"); }
+	override string GetDescription() { return Stringtable.Localize("$ARC_ALTERATION_DESCRIPTION"); }
 }
 
 class ArcanumTreeConjuration : ArcanumSpellTree
 {
-	override string GetName() { return "\c[Purple]Conjuration\c-"; }
-	override string GetDescription() { return "If it does not exist, make it.\n\nConjuration is for the strongest of magi. With it, you can summon monsters or materialize objects."; }
+	override string GetName() { return Stringtable.Localize("$ARC_CONJURATION_TITLE"); }
+	override string GetDescription() { return Stringtable.Localize("$ARC_CONJURATION_DESCRIPTION"); }
 }
 
 class ArcanumSpell abstract play

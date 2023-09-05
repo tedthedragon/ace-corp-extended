@@ -222,3 +222,59 @@ ARC_BLUECOLOR                           = "\c[ArcanumReqBlue]%i\c-";
 ARC_FIRECOLOR                           = "\c[Fire]";
 ARC_EXPERIENCE                          = "Experience";
 ARC_SPELLS                              = "Spells";
+
+// Arcanum Trees
+ARC_DESTRUCTION_TITLE                   = "\c[Red]Destruction\c-";
+ARC_DESTRUCTION_DESCRIPTION             = "Those who wish to destroy the world may find out how trivial it is. But is it really what you want?\n\nThis tree contains spells to call down thunder, annihilate entire hordes, or light a candle.";
+
+ARC_RESTORATION_TITLE                   = "\c[Tan]Restoration\c-";
+ARC_RESTORATION_DESCRIPTION             = "It is a wise man's goal to heal the world.\n\nRestoration spells give you the ability to resurrect friends or foes, heal their wounds, cleanse their body, and protect it.";
+
+ARC_ALTERATION_TITLE                    = "\c[Green]Alteration\c-";
+ARC_ALTERATION_DESCRIPTION              = "Nothing is as it appears. Manipulate the world to your liking.\n\nThe school of Alteration lets you destroy entire walls or otherwise manipulate objects.";
+
+ARC_SPELL_DISPLACEMENT                  = "Displacement";
+ARC_SPELL_DISPLACEMENT_DESCRIPTION      = "Partly severs your link to this world and gives you the ability to fly for 4 seconds, then teleports you to where you cast the spell. Enemies cannot see you while being displaced.";
+ARC_SPELL_DISPLACEMENT_TYPE             = "Self";
+
+ARC_SPELL_FAR_REACH                     = "Far Reach";
+ARC_SPELL_FAR_REACH_DESCRIPTION         = "Open doors, trigger switches, and pick up items within a range of \c[Gold]%.1f\c-m.\nDisarms ammo boxes.\n\n\c[Fire]You can launch yourself forward with this spell. Use with caution.\c-";
+ARC_SPELL_FAR_REACH_TYPE                = "Targeted";
+
+ARC_SPELL_FEATHER                       = "Feather";
+ARC_SPELL_FEATHER_DESCRIPTION           = "Creates a circle at target location. Players falling into the circle get their vertical velocity reduced to a safe level. Gravity is also reduced.";
+ARC_SPELL_FEATHER_TYPE                  = "Targeted";
+
+ARC_SPELL_HASTE                         = "Haste";
+ARC_SPELL_HASTE_DESCRIPTION             = "All visible players within 20m get an increase to speed by \c[Gold]%i\c-%%. Effect expires after \c[Gold]%.1f\c- km.";
+ARC_SPELL_HASTE_TYPE                    = "Mass";
+
+ARC_SPELL_MALUS                         = "Horadric Malus";
+ARC_SPELL_MALUS_DESCRIPTION             = "Repairs repairable items by \c[Gold]%i%%\c- of their missing durability. Repairs Vulcanettes and *.E.R.P.s, among other things.";
+ARC_SPELL_MALUS_TYPE                    = "Self, Targeted, Touch";
+
+ARC_SPELL_MASS_RECALL                   = "Mass Recall";
+ARC_SPELL_MASS_RECALL_DESCRIPTION       = "Teleports all players, dead or alive, to the circle.";
+ARC_SPELL_MASS_RECALL_TYPE              = "Mass";
+
+ARC_SPELL_REENERGIZE                    = "Reenergize";
+ARC_SPELL_REENERGIZE_DESCRIPTION        = "Restores up to \c[Gold]%i\c- battery charge, filling partial batteries first.";
+ARC_SPELL_REENERGIZE_TYPE               = "Self, Targeted, Touch";
+
+ARC_SPELL_SHIELD                        = "Shield";
+ARC_SPELL_SHIELD_DESCRIPTION            = "Target is surrounded with a shield that can absorb up to \c[Gold]%i\c- damage. Shield helps put out fire.";
+ARC_SPELL_SHIELD_TYPE                   = "Self, Targeted, Touch";
+
+ARC_SPELL_WORLDBREAKER                  = "Worldbreaker";
+ARC_SPELL_WORLDBREAKER_DESCRIPTION      = "Destroys the target geometry. Maximum sector dimensions: \c[Gold]%ix%i\c-\n\n\c[Fire]Effect occurs 3 seconds after activation.\c-";
+ARC_SPELL_WORLDBREAKER_TYPE             = "Targeted, Touch";
+
+ARC_CONJURATION_TITLE                   = "\c[Purple]Conjuration\c-";
+ARC_CONJURATION_DESCRIPTION             = "If it does not exist, make it.\n\nConjuration is for the strongest of magi. With it, you can summon monsters or materialize objects.";
+
+MANA_BARREL_USE                         = "You take a sip.";
+MANA_BARREL_DRY                         = "You can't reach anything.";
+MANA_BARREL_EMPTY                       = "This barrel is empty.";
+MANA_BARREL_POTION                      = "You filled a potion.";
+MANA_BARREL_POTSLEFT                    = " There is still enough mana to fill \c[LightBlue]%.1f\c- bottles.";
+MANA_BARREL_LASTOFTHEMANA               = " That was the last of the mana.";

@@ -57,7 +57,7 @@ class ManaBarrel : Actor
 
 		if (ManaLeft == 0)
 		{
-			user.A_Log("This barrel is empty.", true);
+			user.A_Log(Stringtable.Localize("$MANA_BARREL_EMPTY"), true);
 			return false;
 		}
 		//if (!(user.player.ReadyWeapon is 'HDHealingBottler' ||self.countinv('HDHealingPotion') >> 0))
@@ -69,13 +69,13 @@ class ManaBarrel : Actor
 			if (ManaLeft >= TotalMana * maxSipFac)
 			{
 				user.A_GiveInventory('HealingMagic', HDHM_MOUTH);
-				user.A_Log("You take a sip.", true);
+				user.A_Log(Stringtable.Localize("$MANA_BARREL_USE"), true);
 				user.A_StartSound("potion/chug", 15);
 				ManaLeft--;
 			}
 			else
 			{
-				user.A_Log("You can't reach anything.", true);
+				user.A_Log(Stringtable.Localize("$MANA_BARREL_DRY"), true);
 			}
 			return false;
 		}
@@ -98,8 +98,8 @@ class ManaBarrel : Actor
 				ManaLeft -= toFill;
 
 				double potsLeft = ManaLeft / double(HDHM_BOTTLE);
-				string extra = potsLeft > 0 ? String.Format(" There is still enough mana to fill \c[LightBlue]%.1f\c- bottles.", potsLeft) : " That was the last of the mana.";
-				user.A_Log("You filled a potion."..extra, true);
+				string extra = potsLeft > 0 ? String.Format(Stringtable.Localize("$MANA_BARREL_POTSLEFT"), potsLeft) : Stringtable.Localize("$MANA_BARREL_LASTOFTHEMANA");
+				user.A_Log(Stringtable.Localize("$MANA_BARREL_POTION")..extra, true);
 				user.A_StartSound("potion/swish", 15);
 			}
 		}

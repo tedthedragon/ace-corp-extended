@@ -5,8 +5,8 @@ class WorldbreakerSpell : ArcanumSpell
 	override string GetName() { return "Worldbreaker"; }
 	override int GetSpellType() { return SType_Targeted; }
 	override int GetManaCost() { return 60; }
-	override string GetDescription() { return String.Format("Destroys the target geometry. Maximum sector dimensions: \c[Gold]%ix%i\c-\n\n\c[Fire]Effect occurs 3 seconds after activation.\c-", int(128 + 256 * GetExperienceFactor()), int(32 + 64 * GetExperienceFactor())); }
-	override string GetTechnicalInfo() { return "Targeted, Touch"; }
+	override string GetDescription() { return String.Format(Stringtable.Localize("$ARC_SPELL_WORLDBREAKER_DESCRIPTION"), int(128 + 256 * GetExperienceFactor()), int(32 + 64 * GetExperienceFactor())); }
+	override string GetTechnicalInfo() { return Stringtable.Localize("$ARC_SPELL_WORLDBREAKER_TYPE"); }
 	override int GetMaxExperience() { return 60; }
 	override class<ArcanumSigil> GetSigil() { return 'WorldbreakerSigil'; }
 }

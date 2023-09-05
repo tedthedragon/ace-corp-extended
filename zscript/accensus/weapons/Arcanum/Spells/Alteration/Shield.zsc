@@ -2,11 +2,11 @@ class ShieldSpell : ArcanumSpell
 {
 	override int GetIndex() { return 20; }
 	override class<ArcanumSpellTree> GetTree() { return 'ArcanumTreeAlteration'; }
-	override string GetName() { return "Shield"; }
+	override string GetName() { return Stringtable.Localize("$ARC_SPELL_SHIELD"); }
 	override int GetSpellType() { return SType_SelfOrMass | SType_Targeted; }
 	override int GetManaCost() { return 70; }
-	override string GetDescription() { return String.Format("Target is surrounded with a shield that can absorb up to \c[Gold]%i\c- damage. Shield helps put out fire.", int(2000 + 8000 * GetExperienceFactor())); }
-	override string GetTechnicalInfo() { return "Self, Targeted, Touch"; }
+	override string GetDescription() { return String.Format(Stringtable.Localize("$ARC_SPELL_SHIELD_DESCRIPTION"), int(2000 + 8000 * GetExperienceFactor())); }
+	override string GetTechnicalInfo() { return Stringtable.Localize("$ARC_SPELL_SHIELD_TYPE"); }
 	override int GetMaxExperience() { return 110; }
 	override class<ArcanumSigil> GetSigil() { return 'ShieldSigil'; }
 	override void DrawHudStuff(HDStatusBar sb, HDPlayerPawn hpl, HDArcanumTome tome)
