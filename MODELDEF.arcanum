@@ -1,6 +1,6 @@
 Model ArcanumRuneGlyph
 {
-	Path "Models" Model 0 "ArcanumPlane.obj" DONTCULLBACKFACES USEACTORPITCH
+	Path "Models/Arcanum" Model 0 "ArcanumPlane.obj" DONTCULLBACKFACES USEACTORPITCH
 	SurfaceSkin 0 0 "Runes/ARUNA0.png" FrameIndex ARUN A 0 0
 	SurfaceSkin 0 0 "Runes/ARUNB0.png" FrameIndex ARUN B 0 0
 	SurfaceSkin 0 0 "Runes/ARUNC0.png" FrameIndex ARUN C 0 0
@@ -32,7 +32,7 @@ Model ArcanumRuneGlyph
 // [Ace; 07.01.22] I don't care enough anymore to always keep this alphabetically sorted.
 Model ArcanumSigilAdd
 {
-	Path "Models" Model 0 "ArcanumPlane.obj" DONTCULLBACKFACES USEACTORPITCH
+	Path "Models/Arcanum" Model 0 "ArcanumPlane.obj" DONTCULLBACKFACES USEACTORPITCH
 	SurfaceSkin 0 0 "FireballSigil_d.png" FrameIndex CRDE A 0 0
 	SurfaceSkin 0 0 "ClaymoreSigil_d.png" FrameIndex CRDE B 0 0
 	SurfaceSkin 0 0 "ThunderclapSigil_d.png" FrameIndex CRDE C 0 0

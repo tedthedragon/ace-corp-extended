@@ -8,6 +8,7 @@ MENU_MACHINEGUNS_TITLE                  = "--- Machine Guns ---";
 MENU_EXPLOSIVES_TITLE                   = "--- Explosives ---";
 MENU_RIFLES_TITLE                       = "--- Rifles ---";
 MENU_ENERGYWEAPONS_TITLE                = "--- Energy Weapons ---";
+MENU_MAGICWEAPONS_TITLE                 = "--- Magic Weapons ---";
 MENU_ARMOUR_TITLE                       = "--- Armour ---";
 MENU_RESETOPTIONS_TITLE                 = "--- Reset Options ---";
 
@@ -125,7 +126,19 @@ MENU_WYVERN_HUNTER_SPAWNTEXT            = "Control the spawn rate of the Wyvern 
 MENU_WYVERN_SLAYER_SPAWNTEXT            = "Control the spawn rate of the Wyvern on Slayer Shotguns:";
 MENU_WYVERN_BACKPACKS                   = "Control whether the Wyvern spawns in Backpacks:";
 
+// Arcanum Options Text
+MENU_ARCANUM_TITLE                       = "------ Arcanum Spell Tome Options ------";
+MENU_ARCANUM_CHAINSAW_SPAWNTEXT          = "Control the spawn rate of the Arcanum on Chainsaws:";
+MENU_MANABARREL_BARREL_SPAWNTEXT         = "Control the spawn rate of the Mana Barrel instead of Explosive Barrels:";
+MENU_ARCANUM_BACKPACKS                   = "Control whether the Arcanum spawns in Backpacks:";
+
+MENU_ARCANUM_OPTIONS                    = "Arcanum Control Options";
+MENU_INVERT_TREE_SELECTION              = "Invert Tree Selection:";
+MENU_INVERT_SPELL_SELECTION             = "Invert Spell Selection:";
+MENU_ZOOM_HOLD                          = "Hold Zoom To Browse Spells:";
+
 // Item Tags
+TAG_ARCANUM                             = "Arcanum tome";
 TAG_BLACKHAWK                           = "'Blackhawk' Hi-Tech Crossbow";
 TAG_BLACKHAWKBOLT                       = "Regular Bolt";
 TAG_BLACKHAWKBOLT_E                     = "Electric Bolt";

@@ -1,0 +1,344 @@
+class ArcanumSigil : HDActor abstract
+{
+	override void PostBeginPlay()
+	{
+		Scale.y *= 1.0 + 0.2 * abs(sin(pitch));
+
+		// [Ace] Make sure the circle is never inside the ground.
+		double RelZ = pos.z - floorz;
+		double Diff = RelZ - Height * cos(pitch);
+		if (Diff < 0)
+		{
+			SetOrigin((pos.x, pos.y, pos.z + abs(Diff)), false);
+		}
+
+		InitRuneSlots();
+		A_StartSound("Arcanum/Sigil/Spawn", CHAN_BODY);
+
+		Super.PostBeginPlay();
+	}
+
+	protected void CreateRuneSlot(vector2 offCenter, vector2 size, double scaleMult = 1.0)
+	{
+		double Stretch = 1.0 + 0.2 * abs(cos(pitch));
+		
+		Actor a; bool success;
+		double sinp = sin(pitch);
+		double cosp = cos(pitch);
+		double Extra = (abs(pitch) != 90 ? (pitch > 0 ? ArcanumMath.Pi * cosp : (pitch < 0 ? -ArcanumMath.Pi * sinp : 0)) : 0);
+		[success, a] = A_SpawnItemEx("ArcanumRuneSlot", offcenter.y * sin(pitch - Extra), offcenter.x, offcenter.y * (cos(pitch - Extra) / Stretch), flags: SXF_NOCHECKPOSITION | SXF_SETMASTER | SXF_TRANSFERSTENCILCOL | SXF_TRANSFERPITCH);
+		if (success)
+		{
+			let Rune = ArcanumRuneSlot(a);
+			Rune.Scale *= 0.09 * scaleMult; // [Ace] 0.09 is the standardized value. Use scale mult to scale it up or down. I am not tying it to size because it's BLEH. Scaling in this engine is ten kinds of FUCKED.
+			Rune.roll = random(0, 359);
+			Rune.A_SetSize(size.x, size.y);
+			Rune.SetOrigin(Rune.pos - (0, 0, Rune.Height / 2.0), false); // [Ace] Offset the slot to account for Doom's collision.
+			Rune.DecaySpeedMult = 1.0;
+		}
+
+		RuneSlots.Push(ArcanumRuneSlot(a));
+	}
+
+	static void PlayCastSound(Actor a, string snd)
+	{
+		a.A_StartSound(snd, 10, 0, pitch: frandom(0.9, 1.0));
+	}
+
+	override void Tick()
+	{
+		if (arcanum_debug)
+		{
+			AceCore.DrawCollisionBox(self);
+			AceCore.DrawXYZ(self);
+		}
+
+		if (HasTriggered && ReactionTime <= 0 || !HasTriggered && GetAge() >= 35 * 30)
+		{
+			Destroy();
+			return;
+		}
+
+		int ActiveRunesCount = 0;
+		int RuneSlotsCount = RuneSlots.Size();
+		for (int i = 0; i < RuneSlotsCount; ++i)
+		{
+			if (RuneSlots[i] && RuneSlots[i].Active)
+			{
+				ActiveRunesCount++;
+			}
+		}
+
+		if (ActiveRunesCount == RuneSlotsCount)
+		{
+			if (!bNOHEIGHTADJUST)
+			{
+				A_SetSize(-1, 1); // [Ace] So it shoots from the center.
+			}
+			if (!HasTriggered)
+			{
+				HasTriggered = true;
+				if (Spell.GainExperience(multiplayer ? 1.25 : 1.0))
+				{
+					master.A_Log("\c[Fire]"..Spell.GetName().."\c- has reached full power.", true);
+				}
+			}
+			switch (SigilType)
+			{
+				case ArcanumSpell.SType_Targeted: ActivateTargeted(); break;
+				case ArcanumSpell.SType_SelfOrMass: ActivateSelfOrMass(); break;
+			}
+		}
+
+		Super.Tick();
+	}
+
+	protected virtual void OnDisappearing() { }
+	protected virtual void ActivateTargeted() { }
+	protected virtual void ActivateSelfOrMass() { }
+	protected virtual void InitRuneSlots() { } // [Ace] Technically not initializing any runes allows you to make insta-cast spells.
+
+	const SelfCastMaxPitch = 84;
+
+	private Array<ArcanumRuneSlot> RuneSlots;
+
+	double ExperienceFactor;
+	int SigilType;
+	bool HasTriggered;
+	ArcanumSpell Spell;
+
+	protected double AddAlpha;
+	property AddAlpha: AddAlpha;
+
+	int SigilBehaviourFlags;
+	flagdef NoHeightAdjust: SigilBehaviourFlags, 0;
+	flagdef DontPitch: SigilBehaviourFlags, 1;
+
+	Default
+	{
+		Height 22;
+		Radius 25;
+		ArcanumSigil.AddAlpha 1.0;
+		ReactionTime 0;
+		+NOINTERACTION
+		+BRIGHT
+		Renderstyle "AddShaded";
+		Species "ArcanumSigil";	
+	}
+
+	States
+	{
+		Spawn:
+			#### # -1 // [Ace] The main sigil is invisible because I don't feel like defining multiple models for each sigil. The Add ones are automatically adjusted.
+			{
+				for (double i = -0.4; i <= 0.4; i += 0.1)
+				{
+					// [Ace] TO FIX: When at 45 degree pitch, the sigils are placed diagonally of each other, which blurs the shape. Gotta add more trig but that's for later.
+					Actor a; bool success;
+					[success, a] = A_SpawnItemEx("ArcanumSigilAdd", i * cos(pitch), 0, i * sin(pitch), flags: SXF_NOCHECKPOSITION | SXF_SETMASTER | SXF_TRANSFERSPRITEFRAME | SXF_TRANSFERSTENCILCOL | SXF_TRANSFERPITCH);
+					if (success)
+					{
+						let AddSigil = ArcanumSigilAdd(a);
+						AddSigil.A_SetScale(Scale.x * (1.0 - abs(i) / 30.0), Scale.y * (1.0 - abs(i) / 30.0));
+						AddSigil.AddAlpha = 1.0 + AddAlpha; // [Ace; 10.05.21] +1.0 to compenensate for the reduced number of sigils. Performance reasons.
+					}
+				}
+			}
+			Stop;
+	}
+}
+
+// [Ace] This is what you shoot to activate the spell.
+class ArcanumRuneSlot : Actor
+{
+	override void PostBeginPlay()
+	{
+		SetShade(Color(255, int(fillcolor.r * 1.3), int(fillcolor.g * 1.3), int(fillcolor.b * 1.3)));
+
+		Super.PostBeginPlay();
+	}
+
+	void ActivateRune(Actor activator)
+	{
+		let Sigil = ArcanumSigil(master);
+		if (IsDisappearing || !Sigil || Sigil.HasTriggered || Sigil.SigilType == ArcanumSpell.SType_SelfOrMass && Sigil.Distance2D(activator) > Sigil.Radius || Sigil.SigilType == ArcanumSpell.SType_Targeted && activator.AbsAngle(angle, activator.AngleTo(self)) > 60)
+		{
+			return;
+		}
+
+		SetStateLabel("Trigger");
+		A_StartSound("Arcanum/Rune/Spawn", CHAN_BODY, pitch: frandom(1.0, 1.25));
+		Active = true;
+		Alpha = default.Alpha;
+
+		for (int i = 0; i < 128; ++i)
+		{
+			double PartSpawnRoll = random(0, 360);
+			double sinroll = sin(PartSpawnRoll);
+			double cosroll = cos(PartSpawnRoll);
+			double sinp = sin(pitch);
+			double cosp = cos(pitch);
+			double sinpn = sin(pitch - 90);
+			double cospn = cos(pitch - 90);
+			A_SpawnParticle(fillcolor, SPF_FULLBRIGHT | SPF_RELATIVE, random(4, 12), frandom(1.5, 3), 0, Radius * sinroll * sinp, Radius * cosroll, Height / 2 + Radius * sinroll * cosp, 2 * sinpn, 0, 2 * cospn);
+			A_SpawnParticle(fillcolor, SPF_FULLBRIGHT | SPF_RELATIVE, random(4, 12), frandom(1.5, 3), 0, Radius * sinroll * sinp, Radius * cosroll, Height / 2 + Radius * sinroll * cosp, -2 * sinpn, 0, -2 * cospn);
+		}
+	}
+
+	override void Tick()
+	{
+		if (arcanum_debug)
+		{
+			AceCore.DrawCollisionBox(self);
+		}
+
+		let Sigil = ArcanumSigil(master);
+		if (!Sigil && !IsDisappearing)
+		{
+			Active = false;
+			SetStateLabel('Disappear');
+			IsDisappearing = true;
+			return;
+		}
+
+		if (!IsDisappearing && Sigil.HasTriggered)
+		{
+			Alpha = default.Alpha;
+			A_ChangeLinkFlags(true);
+			return;
+		}
+
+		if (Active)
+		{
+			A_FadeOut(0.005 * DecaySpeedMult, 0);
+			if (Alpha < 0)
+			{
+				Alpha = default.Alpha;
+				Active = false;
+				A_ChangeLinkFlags(false);
+				SetStateLabel('Spawn');
+				return;
+			}
+		}
+
+		Super.Tick();
+	}
+
+	bool Active;
+	bool IsDisappearing;
+	double DecaySpeedMult;
+
+	Default
+	{
+		+NOGRAVITY
+		+THRUACTORS
+		+INVISIBLE
+		-SOLID
+		+BRIGHT
+		+NOSECTOR
+		Alpha 1.0;
+		Renderstyle "AddShaded";
+		Species "ArcanumSigil";	
+	}
+
+	States
+	{
+		Spawn:
+			TNT1 A -1;
+			Stop;
+		Trigger:
+			ARUN # -1
+			{
+				if (!Active)
+				{
+					frame = random(0, 25);
+					A_SpawnItemEx("ArcanumRuneGlyph", 0, 0, Height / 2, flags: SXF_NOCHECKPOSITION | SXF_SETMASTER | SXF_TRANSFERSTENCILCOL | SXF_TRANSFERSCALE | SXF_TRANSFERPITCH);
+				}
+			}
+			Stop;
+		Disappear:
+			//ARUN # 1 A_FadeOut(0.08); disappears way too fast
+			ARUN # 1 A_FadeOut(0.025);
+			Loop;
+	}
+}
+
+// --------------------------------------------------
+// DECORATIVE ACTORS
+// --------------------------------------------------
+
+class ArcanumSigilAdd : ArcanumSigil
+{
+	override void PostBeginPlay()
+	{
+		Actor.PostBeginPlay();
+	}
+
+	override void Tick()
+	{
+		if (IsDisappearing)
+		{
+			Actor.Tick();
+			return;
+		}
+
+		Alpha = AddAlpha * frandom(0.02, 0.13);
+		
+		if (!master || !IsDisappearing && master.InStateSequence(master.CurState, master.FindState('Disappear')))
+		{
+			SetStateLabel("Disappear");
+			IsDisappearing = true;
+			return;
+		}
+
+		Actor.Tick();
+	}
+
+	private bool IsDisappearing;
+
+	States
+	{
+		Disappear:
+			#### # 25;
+			#### # 1
+			{
+				A_FadeOut(0.004 * AddAlpha);
+				OnDisappearing();
+			}
+			Loop;
+	}
+}
+
+class ArcanumRuneGlyph : Actor // [Ace] Used because I need it to be centered. Models are fucky.
+{
+	Default
+	{
+		+BRIGHT
+		+NOINTERACTION
+		Renderstyle "AddShaded";
+		Species "ArcanumSigil";	
+	}
+
+	States
+	{
+		Spawn:
+			#### # 1
+			{
+				let RuneSlot = ArcanumRuneSlot(master);
+				if (!RuneSlot || !RuneSlot.IsDisappearing && !RuneSlot.Active)
+				{
+					Destroy();
+					return;
+				}
+
+				sprite = RuneSlot.sprite;
+				frame = RuneSlot.frame;
+				alpha = RuneSlot.alpha;
+				angle = RuneSlot.angle;
+				pitch = RuneSlot.pitch;
+				roll = RuneSlot.roll;
+				scale = RuneSlot.scale;
+			}
+			Loop;
+	}
+}

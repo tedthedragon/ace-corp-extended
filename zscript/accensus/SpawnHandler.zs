@@ -160,6 +160,7 @@ class AceCorpsWepsHandler : EventHandler {
         // Backpack Spawns
         //-----------------
 
+        if (!arcanum_allowBackpacks)           backpackBlacklist.push((Class<Inventory>)('HDArcanumTome'));
         if (!blackhawk_allowBackpacks)         backpackBlacklist.push((Class<Inventory>)('HDBlackhawk'));
         if (!blackjack_allowBackpacks)         backpackBlacklist.push((Class<Inventory>)('HDBlackjack'));
         if (!gungnir_allowBackpacks)           backpackBlacklist.push((Class<Inventory>)('HDGungnir'));
@@ -239,6 +240,12 @@ class AceCorpsWepsHandler : EventHandler {
         //------------
         // Weaponry
         //------------
+
+        // Arcanum
+        // TODO: Make a Random spawner for the Arcanum. - [Ted]
+        Array<AceCorpsSpawnItemEntry> spawns_arcanum;
+        spawns_arcanum.push(addItemEntry('Lumberjack', arcanum_chainsaw_spawn_bias));
+        addItem('HDArcanumTome', spawns_arcanum, arcanum_persistent_spawning);
 
         // Blackhawk
         Array<AceCorpsSpawnItemEntry> spawns_blackhawk;
@@ -330,6 +337,18 @@ class AceCorpsWepsHandler : EventHandler {
         // --------------------
         // Item Spawns
         // --------------------
+
+
+
+        // --------------------
+        // Other Actor Spawns
+        // --------------------
+
+        
+        // Mana Barrels
+        Array<AceCorpsSpawnItemEntry> spawns_manabarrels;
+        spawns_manabarrels.push(addItemEntry('HDBarrel', manabarrel_barrel_spawn_bias));
+        addItem('ManaBarrel', spawns_manabarrels, arcanum_persistent_spawning);
     }
 
     // Random stuff, stores it and forces negative values just to be 0.

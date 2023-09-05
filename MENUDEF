@@ -408,6 +408,49 @@ OptionMenu "redlineSpawning" {
 	SafeCommand "$MENU_RESETALLOPTIONS", "redline_reset_cvars"
 }
 
+// Magic Bullshit????????????
+OptionMenu "arcanumSpawning" {
+    Title "$MENU_ARCANUM_TITLE"
+    StaticText ""
+
+	StaticText "$MENU_ARCANUM_OPTIONS", "Purple"
+	FlagOption "$MENU_INVERT_TREE_SELECTION", "arcanum_invert", "YesNo", 0
+	FlagOption "$MENU_INVERT_SPELL_SELECTION", "arcanum_invert", "YesNo", 1
+	Option "$MENU_ZOOM_HOLD", "arcanum_zoomhold", "YesNo"
+	StaticText ""
+
+   	StaticText "$MENU_NOTICE", "Purple"
+    StaticText "$MENU_SPAWNRATE_TEXT1", "White"
+    StaticText "$MENU_SPAWNRATE_TEXT2", "White"
+    StaticText ""
+
+	StaticText "$MENU_SPAWNOPTIONS", "Purple"
+    StaticText "$MENU_ARCANUM_CHAINSAW_SPAWNTEXT", "White"
+	Option "$MENU_WEPSPAWNRATE", "arcanum_chainsaw_spawn_bias", "SpawnBias"
+	SafeCommand "$MENU_RESETWEP", "resetcvar arcanum_chainsaw_spawn_bias"
+ 	StaticText ""
+
+	StaticText "$MENU_SPAWNOPTIONS", "Purple"
+    StaticText "$MENU_MANABARREL_BARREL_SPAWNTEXT", "White"
+	Option "$MENU_WEPSPAWNRATE", "manabarrel_barrel_spawn_bias", "SpawnBias"
+	SafeCommand "$MENU_RESETWEP", "resetcvar manabarrel_barrel_spawn_bias"
+	StaticText ""
+	
+	StaticText "$MENU_ARCANUM_BACKPACKS", "White"
+	Option "$MENU_BACKPACKSALLOWED", "arcanum_allowBackpacks", "OnOff"
+ 	StaticText ""
+
+	StaticText "$MENU_PERSISTENCYOPTIONS", "Purple"
+    StaticText "$MENU_PERSISTENCY_TEXT", "White"
+	Option "$MENU_PERSISTENCY", "arcanum_persistent_spawning", "OnOff"
+	SafeCommand "$MENU_RESETPERSISTENCY", "resetcvar arcanum_persistent_spawning"
+ 	StaticText ""
+   	StaticText ""
+
+	StaticText "$MENU_RESETOPTIONS", "Purple"
+	SafeCommand "$MENU_RESETALLOPTIONS", "arcanum_reset_cvars"
+}
+
 
 OptionMenu "AceCorpMenu" {
 	Title "$ACE_MENU"
@@ -453,6 +496,11 @@ OptionMenu "AceCorpMenu" {
     Submenu "$TAG_HAMMERHEAD", "hammerheadSpawning", 0, 1
 	StaticText ""
     Submenu "$TAG_REDLINE", "redlineSpawning", 0, 1
+	StaticText ""
+
+	StaticText "$MENU_MAGICWEAPONS_TITLE", "Purple"
+	StaticText ""
+	Submenu "$TAG_ARCANUM", "arcanumSpawning", 0, 1
 	StaticText ""
 	
 	StaticText "$MENU_RESETOPTIONS_TITLE", "Red"

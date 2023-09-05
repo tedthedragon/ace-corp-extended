@@ -373,7 +373,7 @@ class HDArcanumTome : HDWeapon
 		+INVENTORY.INVBAR
 		HDWeapon.BarrelSize 5, 2, 1; // [Ace] I don't even know why.
 		Scale 0.6;
-		Tag "Arcanum tome";
+		Tag "$TAG_ARCANUM";
 		Inventory.PickupSound "weapons/pocket";
 		HDWeapon.Refid "arc";
 		Inventory.MaxAmount 1;
